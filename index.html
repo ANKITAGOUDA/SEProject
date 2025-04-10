@@ -1,0 +1,3196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EduDev Portal - Integrated Education & Employee Development</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .loader {
+            border: 3px solid #f3f3f3;
+            border-radius: 50%;
+            border-top: 3px solid #3498db;
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+            display: none;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -13px;
+            top: 0;
+            width: 26px;
+            height: 26px;
+            background-color: #4db6ac;
+            border-radius: 50%;
+            z-index: 1;
+        }
+        .timeline-item::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 26px;
+            bottom: 0;
+            width: 2px;
+            background-color: #e0e0e0;
+            z-index: 0;
+        }
+        .timeline-item:last-child::after {
+            display: none;
+        }
+        .course-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        .certificate-card:hover {
+            transform: scale(1.02);
+        }
+        #completionRing {
+            transform: rotate(-90deg);
+        }
+        .certificate-template {
+            position: fixed;
+            top: -9999px;
+            left: -9999px;
+        }
+        @media print {
+            .certificate-template {
+                position: static;
+                top: auto;
+                left: auto;
+            }
+        }
+    </style>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: '#e0f7fa',
+                            100: '#b2ebf2',
+                            200: '#80deea',
+                            300: '#4dd0e1',
+                            400: '#26c6da',
+                            500: '#00bcd4',
+                            600: '#00acc1',
+                            700: '#0097a7',
+                            800: '#00838f',
+                            900: '#006064',
+                        },
+                        secondary: {
+                            50: '#e8f5e9',
+                            100: '#c8e6c9',
+                            200: '#a5d6a7',
+                            300: '#81c784',
+                            400: '#66bb6a',
+                            500: '#4caf50',
+                            600: '#43a047',
+                            700: '#388e3c',
+                            800: '#2e7d32',
+                            900: '#1b5e20',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-gray-50">
+    <!-- Login Page -->
+    <section id="loginPage" class="min-h-screen flex items-center justify-center">
+        <div class="bg-white p-8 rounded-lg shadow-md w-full max-w-md">
+            <div class="text-center mb-8">
+                <div class="flex justify-center mb-4">
+                    <i class="bi bi-mortarboard-fill text-5xl text-teal-600"></i>
+                </div>
+                <h1 class="text-2xl font-bold text-gray-800">EduDev Portal</h1>
+                <p class="text-gray-600">Integrated Education & Employee Development</p>
+            </div>
+            
+            <div id="loginError" class="bg-red-100 text-red-700 p-3 rounded mb-4 hidden">
+                Invalid credentials. Please try again.
+            </div>
+            
+            <div class="mb-4 flex border border-gray-300 rounded overflow-hidden">
+                <button id="loginTabBtn" class="w-1/2 py-2 font-medium bg-teal-600 text-white" onclick="showLoginTab()">Login</button>
+                <button id="registerTabBtn" class="w-1/2 py-2 font-medium text-gray-700 bg-gray-100" onclick="showRegisterTab()">Register</button>
+            </div>
+            
+            <div id="loginFormContainer">
+                <form id="loginForm" class="space-y-4">
+                    <div>
+                        <label for="username" class="block text-gray-700 font-medium mb-2">Username</label>
+                        <input type="text" id="username" name="username" class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-teal-500" required>
+                    </div>
+                    
+                    <div>
+                        <label for="password" class="block text-gray-700 font-medium mb-2">Password</label>
+                        <input type="password" id="password" name="password" class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-teal-500" required>
+                    </div>
+                    
+                    <div class="flex justify-between items-center">
+                        <div class="flex items-center">
+                            <input type="checkbox" id="remember" class="mr-2">
+                            <label for="remember" class="text-gray-600 text-sm">Remember me</label>
+                        </div>
+                        <a href="#" class="text-sm text-teal-600 hover:underline">Forgot password?</a>
+                    </div>
+                    
+                    <button type="submit" class="w-full bg-teal-600 text-white py-2 rounded font-medium hover:bg-teal-700 transition-colors">
+                        Login
+                    </button>
+                </form>
+            </div>
+            
+            <div id="registerFormContainer" class="hidden">
+                <form id="registerForm" class="space-y-4">
+                    <div>
+                        <label for="registerFullName" class="block text-gray-700 font-medium mb-2">Full Name</label>
+                        <input type="text" id="registerFullName" name="fullName" class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-teal-500" required>
+                    </div>
+                    
+                    <div>
+                        <label for="registerEmail" class="block text-gray-700 font-medium mb-2">Email</label>
+                        <input type="email" id="registerEmail" name="email" class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-teal-500" required>
+                    </div>
+                    
+                    <div>
+                        <label for="registerUsername" class="block text-gray-700 font-medium mb-2">Username</label>
+                        <input type="text" id="registerUsername" name="username" class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-teal-500" required>
+                    </div>
+                    
+                    <div>
+                        <label for="registerPassword" class="block text-gray-700 font-medium mb-2">Password</label>
+                        <input type="password" id="registerPassword" name="password" class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-teal-500" required>
+                    </div>
+                    
+                    <div>
+                        <label for="registerConfirmPassword" class="block text-gray-700 font-medium mb-2">Confirm Password</label>
+                        <input type="password" id="registerConfirmPassword" name="confirmPassword" class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-teal-500" required>
+                    </div>
+                    
+                    <div>
+                        <label for="registerRole" class="block text-gray-700 font-medium mb-2">Role</label>
+                        <select id="registerRole" name="role" class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-teal-500" required>
+                            <option value="employee">Employee</option>
+                            <option value="educator">Educator</option>
+                            <option value="hr">HR</option>
+                            <option value="admin">Admin</option>
+                        </select>
+                    </div>
+                    
+                    <button type="submit" class="w-full bg-teal-600 text-white py-2 rounded font-medium hover:bg-teal-700 transition-colors">
+                        Register
+                    </button>
+                </form>
+            </div>
+            
+            <div id="registrationSuccess" class="hidden mt-4 bg-green-100 text-green-700 p-3 rounded">
+                Registration successful! You can now login with your credentials.
+            </div>
+        </div>
+    </section>
+
+    <!-- Main Application -->
+    <section id="mainApp" class="hidden">
+        <!-- Navigation -->
+        <nav class="bg-teal-600 text-white p-4 shadow-md">
+            <div class="container mx-auto flex justify-between items-center">
+                <div class="flex items-center space-x-2">
+                    <i class="bi bi-mortarboard-fill text-2xl"></i>
+                    <h1 class="text-2xl font-bold">EduDev Portal</h1>
+                </div>
+                <div class="hidden md:flex space-x-6">
+                    <button onclick="showSection('dashboard')" class="hover:text-teal-200 flex items-center space-x-1">
+                        <i class="bi bi-speedometer"></i>
+                        <span>Dashboard</span>
+                    </button>
+                    <button onclick="showSection('courses')" class="hover:text-teal-200 flex items-center space-x-1">
+                        <i class="bi bi-book"></i>
+                        <span>Courses</span>
+                    </button>
+                    <button onclick="showSection('certifications')" class="hover:text-teal-200 flex items-center space-x-1">
+                        <i class="bi bi-award"></i>
+                        <span>Certifications</span>
+                    </button>
+                    <button onclick="showSection('career')" class="hover:text-teal-200 flex items-center space-x-1">
+                        <i class="bi bi-graph-up"></i>
+                        <span>Career Track</span>
+                    </button>
+                    <button onclick="showSection('compliance')" class="hover:text-teal-200 flex items-center space-x-1">
+                        <i class="bi bi-shield-check"></i>
+                        <span>Compliance</span>
+                    </button>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <div class="hidden md:flex items-center space-x-2">
+                        <select id="roleSelector" class="bg-teal-700 text-white border-0 rounded py-1 px-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-300" onchange="switchRole()">
+                            <option value="employee">Employee</option>
+                            <option value="admin">Admin</option>
+                            <option value="educator">Educator</option>
+                            <option value="hr">HR</option>
+                        </select>
+                        <span id="userName" class="flex items-center">
+                            <i class="bi bi-person-circle mr-2 text-xl"></i>
+                            <span id="currentUsername">John Doe</span>
+                        </span>
+                    </div>
+                    <div class="relative group">
+                        <button id="mobileMenuButton" class="md:hidden text-xl">
+                            <i class="bi bi-list"></i>
+                        </button>
+                        <div id="mobileMenu" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-2 z-10">
+                            <button onclick="showSection('dashboard')" class="block w-full text-left px-4 py-2 text-gray-700 hover:bg-teal-100">Dashboard</button>
+                            <button onclick="showSection('courses')" class="block w-full text-left px-4 py-2 text-gray-700 hover:bg-teal-100">Courses</button>
+                            <button onclick="showSection('certifications')" class="block w-full text-left px-4 py-2 text-gray-700 hover:bg-teal-100">Certifications</button>
+                            <button onclick="showSection('career')" class="block w-full text-left px-4 py-2 text-gray-700 hover:bg-teal-100">Career Track</button>
+                            <button onclick="showSection('compliance')" class="block w-full text-left px-4 py-2 text-gray-700 hover:bg-teal-100">Compliance</button>
+                        </div>
+                    </div>
+                    <button onclick="logout()" class="bg-teal-700 px-4 py-2 rounded hover:bg-teal-800 flex items-center">
+                        <span class="hidden md:inline">Logout</span>
+                        <i class="bi bi-box-arrow-right md:ml-2"></i>
+                    </button>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <div class="container mx-auto p-4">
+            <!-- Role Indicator -->
+            <div class="bg-teal-50 p-3 rounded-md shadow-sm mb-4 flex items-center justify-between">
+                <div class="flex items-center">
+                    <i class="bi bi-person-badge text-teal-600 mr-2 text-xl"></i>
+                    <div>
+                        <p class="text-gray-600">Current Role:</p>
+                        <p class="font-medium text-teal-700" id="currentRoleDisplay">Employee</p>
+                    </div>
+                </div>
+                <div class="md:hidden">
+                    <select id="mobileRoleSelector" class="bg-teal-600 text-white border-0 rounded py-1 px-2 text-sm" onchange="switchRole()">
+                        <option value="employee">Employee</option>
+                        <option value="admin">Admin</option>
+                        <option value="educator">Educator</option>
+                        <option value="hr">HR</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Dashboard Section -->
+            <section id="dashboard" class="space-y-6">
+                <div class="bg-white p-4 rounded-lg shadow-sm mb-6">
+                    <h2 class="text-lg font-semibold text-teal-700 mb-2">Welcome back, <span id="dashboardUsername">John</span>!</h2>
+                    <p class="text-gray-600">Track your progress and continue your professional development journey.</p>
+                </div>
+                
+                <div class="grid md:grid-cols-4 gap-4">
+                    <!-- Stats Cards -->
+                    <div class="bg-white p-6 rounded-lg shadow-sm border-l-4 border-teal-500">
+                        <h3 class="text-lg font-semibold text-gray-700">Courses In Progress</h3>
+                        <p class="text-3xl font-bold text-teal-600">4</p>
+                        <p class="text-sm text-gray-500 mt-2">2 due this month</p>
+                    </div>
+                    <div class="bg-white p-6 rounded-lg shadow-sm border-l-4 border-blue-500">
+                        <h3 class="text-lg font-semibold text-gray-700">Certifications</h3>
+                        <p class="text-3xl font-bold text-blue-600">7</p>
+                        <p class="text-sm text-gray-500 mt-2">1 expiring soon</p>
+                    </div>
+                    <div class="bg-white p-6 rounded-lg shadow-sm border-l-4 border-green-500">
+                        <h3 class="text-lg font-semibold text-gray-700">Career Goals</h3>
+                        <p class="text-3xl font-bold text-green-600">2/5</p>
+                        <p class="text-sm text-gray-500 mt-2">40% completed</p>
+                    </div>
+                    <div class="bg-white p-6 rounded-lg shadow-sm border-l-4 border-purple-500">
+                        <h3 class="text-lg font-semibold text-gray-700">Learning Hours</h3>
+                        <p class="text-3xl font-bold text-purple-600">24</p>
+                        <p class="text-sm text-gray-500 mt-2">This quarter</p>
+                    </div>
+                </div>
+
+                <div class="grid md:grid-cols-2 gap-6">
+                    <!-- Recent Activities -->
+                    <div class="bg-white p-6 rounded-lg shadow-sm">
+                        <div class="flex justify-between items-center mb-4">
+                            <h2 class="text-xl font-bold text-gray-700">Recent Activities</h2>
+                            <button class="text-teal-600 hover:text-teal-800 text-sm font-medium">View All</button>
+                        </div>
+                        <div class="space-y-4" id="activities">
+                            <div class="loader mx-auto"></div>
+                        </div>
+                    </div>
+                    
+                    <!-- Upcoming Deadlines -->
+                    <div class="bg-white p-6 rounded-lg shadow-sm">
+                        <div class="flex justify-between items-center mb-4">
+                            <h2 class="text-xl font-bold text-gray-700">Upcoming Deadlines</h2>
+                            <button class="text-teal-600 hover:text-teal-800 text-sm font-medium">View Calendar</button>
+                        </div>
+                        <div class="space-y-3">
+                            <div class="flex justify-between items-center border-b pb-3">
+                                <div>
+                                    <h3 class="font-medium">Leadership Fundamentals</h3>
+                                    <p class="text-sm text-gray-500">Module 4 Submission</p>
+                                </div>
+                                <div class="text-right">
+                                    <span class="text-red-600 font-medium">Feb 15, 2025</span>
+                                    <p class="text-xs text-gray-500">5 days left</p>
+                                </div>
+                            </div>
+                            <div class="flex justify-between items-center border-b pb-3">
+                                <div>
+                                    <h3 class="font-medium">Effective Communication</h3>
+                                    <p class="text-sm text-gray-500">Final Assessment</p>
+                                </div>
+                                <div class="text-right">
+                                    <span class="text-amber-600 font-medium">Mar 20, 2025</span>
+                                    <p class="text-xs text-gray-500">10 days left</p>
+                                </div>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <div>
+                                    <h3 class="font-medium">Data Privacy Certificate</h3>
+                                    <p class="text-sm text-gray-500">Renewal Due</p>
+                                </div>
+                                <div class="text-right">
+                                    <span class="text-gray-600 font-medium">Apr 5, 2025</span>
+                                    <p class="text-xs text-gray-500">26 days left</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Recommended Courses -->
+                <div class="bg-white p-6 rounded-lg shadow-sm">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-xl font-bold text-gray-700">Recommended for You</h2>
+                        <button class="text-teal-600 hover:text-teal-800 text-sm font-medium">View All Courses</button>
+                    </div>
+                    <div class="grid md:grid-cols-3 gap-4">
+                        <div class="border rounded-lg overflow-hidden course-card transition-all duration-300">
+                            <div class="h-32 bg-teal-100 flex items-center justify-center">
+                                <i class="bi bi-people text-4xl text-teal-600"></i>
+                            </div>
+                            <div class="p-4">
+                                <h3 class="font-medium mb-1">Advanced Team Leadership</h3>
+                                <p class="text-sm text-gray-600 mb-2">Recommended based on your career path</p>
+                                <button class="bg-teal-600 text-white px-3 py-1 rounded text-sm hover:bg-teal-700" onclick="openCourseVideo('https://www.youtube.com/embed/e6zyG47jJrs')">Start Course</button>
+                            </div>
+                        </div>
+                        <div class="border rounded-lg overflow-hidden course-card transition-all duration-300">
+                            <div class="h-32 bg-blue-100 flex items-center justify-center">
+                                <i class="bi bi-book-half text-4xl text-blue-600"></i>
+                            </div>
+                            <div class="p-4">
+                                <h3 class="font-medium mb-1">Educational Policy Implementation</h3>
+                                <p class="text-sm text-gray-600 mb-2">Required government training</p>
+                                <button class="bg-teal-600 text-white px-3 py-1 rounded text-sm hover:bg-teal-700" onclick="openCourseVideo('https://www.youtube.com/embed/Pt8EfVsLDY4')">Start Course</button>
+                            </div>
+                        </div>
+                        <div class="border rounded-lg overflow-hidden course-card transition-all duration-300">
+                            <div class="h-32 bg-green-100 flex items-center justify-center">
+                                <i class="bi bi-pc-display text-4xl text-green-600"></i>
+                            </div>
+                            <div class="p-4">
+                                <h3 class="font-medium mb-1">Digital Learning Techniques</h3>
+                                <p class="text-sm text-gray-600 mb-2">Popular in your department</p>
+                                <button class="bg-teal-600 text-white px-3 py-1 rounded text-sm hover:bg-teal-700" onclick="openCourseVideo('https://www.youtube.com/embed/JKat_7628Tc')">Start Course</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Courses Section -->
+            <section id="courses" class="hidden space-y-6">
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
+                    <h2 class="text-2xl font-bold text-gray-800">Course Catalog</h2>
+                    
+                    <div class="mt-4 md:mt-0 flex flex-col md:flex-row space-y-2 md:space-y-0 md:space-x-2 w-full md:w-auto">
+                        <div class="relative flex-1 md:w-64">
+                            <input type="text" id="courseSearch" placeholder="Search courses..." class="border rounded-md pl-10 pr-4 py-2 w-full focus:outline-none focus:ring-2 focus:ring-teal-500">
+                            <i class="bi bi-search absolute left-3 top-3 text-gray-400"></i>
+                        </div>
+                        <select id="categoryFilter" class="border rounded-md px-4 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-teal-500">
+                            <option value="">All Categories</option>
+                            <option value="Management">Management</option>
+                            <option value="Education">Education</option>
+                            <option value="Technology">Technology</option>
+                            <option value="Compliance">Compliance</option>
+                            <option value="Soft Skills">Soft Skills</option>
+                        </select>
+                        <select id="courseSort" class="border rounded-md px-4 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-teal-500">
+                            <option value="">Sort By</option>
+                            <option value="newest">Newest First</option>
+                            <option value="popular">Most Popular</option>
+                            <option value="completion">Completion Rate</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <!-- Course Catalog Tabs -->
+                <div class="bg-white rounded-lg shadow-sm overflow-hidden">
+                    <div class="border-b overflow-x-auto">
+                        <div class="flex whitespace-nowrap">
+                            <button class="px-6 py-3 font-medium text-teal-700 border-b-2 border-teal-600" onclick="filterCourses('all')">All Courses</button>
+                            <button class="px-6 py-3 font-medium text-gray-500 hover:text-teal-700" onclick="filterCourses('inprogress')">In Progress</button>
+                            <button class="px-6 py-3 font-medium text-gray-500 hover:text-teal-700" onclick="filterCourses('completed')">Completed</button>
+                            <button class="px-6 py-3 font-medium text-gray-500 hover:text-teal-700" onclick="filterCourses('mandatory')">Mandatory</button>
+                            <button class="px-6 py-3 font-medium text-gray-500 hover:text-teal-700" onclick="filterCourses('recommended')">Recommended</button>
+                        </div>
+                    </div>
+                    
+                    <div class="p-6">
+                        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-4" id="courseCatalog">
+                            <div class="loader mx-auto"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Featured Course -->
+                <div class="bg-gradient-to-r from-teal-500 to-teal-700 rounded-lg shadow-md text-white p-6">
+                    <div class="flex flex-col md:flex-row">
+                        <div class="md:w-2/3">
+                            <span class="inline-block px-3 py-1 bg-white text-teal-700 rounded-full text-sm font-medium mb-4">Featured Course</span>
+                            <h2 class="text-2xl font-bold mb-2">Education Technology Integration</h2>
+                            <p class="mb-4">Learn how to effectively integrate technology into educational settings to enhance learning outcomes. This comprehensive course covers digital tools, implementation strategies, and evaluation methods.</p>
+                            <div class="flex space-x-4">
+                                <button class="bg-white text-teal-700 px-4 py-2 rounded font-medium hover:bg-gray-100" onclick="openCourseDetailsModal()">View Details</button>
+                                <button class="border border-white text-white px-4 py-2 rounded font-medium hover:bg-teal-600" onclick="openEnrollmentForm()">Enroll Now</button>
+                            </div>
+                        </div>
+                        <div class="md:w-1/3 flex justify-center items-center mt-6 md:mt-0">
+                            <div class="bg-white p-4 rounded-full">
+                                <i class="bi bi-laptop text-6xl text-teal-600"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Certifications Section -->
+            <section id="certifications" class="hidden space-y-6">
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
+                    <h2 class="text-2xl font-bold text-gray-800">My Certifications</h2>
+                    <div class="mt-4 md:mt-0 flex flex-wrap gap-2">
+                        <button class="bg-teal-600 text-white px-4 py-2 rounded-md hover:bg-teal-700 flex items-center">
+                            <i class="bi bi-plus-circle mr-2"></i>
+                            Apply for New Certification
+                        </button>
+                        <button onclick="openUploadModal()" class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 flex items-center">
+                            <i class="bi bi-upload mr-2"></i>
+                            Upload Certificate
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="grid md:grid-cols-4 gap-4 mb-6">
+                    <div class="bg-white p-6 rounded-lg shadow-sm flex flex-col items-center">
+                        <div class="rounded-full bg-teal-100 p-4 mb-4">
+                            <i class="bi bi-award-fill text-4xl text-teal-600"></i>
+                        </div>
+                        <h3 class="text-lg font-semibold text-gray-700">Active</h3>
+                        <p class="text-3xl font-bold text-teal-600">5</p>
+                    </div>
+                    <div class="bg-white p-6 rounded-lg shadow-sm flex flex-col items-center">
+                        <div class="rounded-full bg-amber-100 p-4 mb-4">
+                            <i class="bi bi-hourglass-split text-4xl text-amber-600"></i>
+                        </div>
+                        <h3 class="text-lg font-semibold text-gray-700">Expiring Soon</h3>
+                        <p class="text-3xl font-bold text-amber-600">1</p>
+                    </div>
+                    <div class="bg-white p-6 rounded-lg shadow-sm flex flex-col items-center">
+                        <div class="rounded-full bg-blue-100 p-4 mb-4">
+                            <i class="bi bi-clock-history text-4xl text-blue-600"></i>
+                        </div>
+                        <h3 class="text-lg font-semibold text-gray-700">Pending</h3>
+                        <p class="text-3xl font-bold text-blue-600">2</p>
+                    </div>
+                    <div class="bg-white p-6 rounded-lg shadow-sm flex flex-col items-center">
+                        <div class="rounded-full bg-red-100 p-4 mb-4">
+                            <i class="bi bi-x-circle text-4xl text-red-600"></i>
+                        </div>
+                        <h3 class="text-lg font-semibold text-gray-700">Expired</h3>
+                        <p class="text-3xl font-bold text-red-600">1</p>
+                    </div>
+                </div>
+                
+                <div class="bg-white rounded-lg shadow-sm overflow-hidden mb-6">
+                    <div class="border-b">
+                        <div class="flex overflow-x-auto">
+                            <button class="px-6 py-3 font-medium text-teal-700 border-b-2 border-teal-600" onclick="filterCertifications('all')">All Certifications</button>
+                            <button class="px-6 py-3 font-medium text-gray-500 hover:text-teal-700" onclick="filterCertifications('active')">Active</button>
+                            <button class="px-6 py-3 font-medium text-gray-500 hover:text-teal-700" onclick="filterCertifications('expiring')">Expiring Soon</button>
+                            <button class="px-6 py-3 font-medium text-gray-500 hover:text-teal-700" onclick="filterCertifications('pending')">Pending</button>
+                            <button class="px-6 py-3 font-medium text-gray-500 hover:text-teal-700" onclick="filterCertifications('expired')">Expired</button>
+                        </div>
+                    </div>
+                    <div class="p-6">
+                        <div class="grid md:grid-cols-2 gap-6" id="certificationsList">
+                            <div class="loader mx-auto"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Government Compliance Report -->
+                <div class="bg-white p-6 rounded-lg shadow-sm">
+                    <h3 class="text-xl font-bold mb-4 text-gray-800">Government Compliance Status</h3>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Requirement</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Deadline</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                <tr>
+                                    <td class="px-6 py-4 whitespace-nowrap">Data Privacy Certification</td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Compliant</span>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">Jan 5, 2025</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                        <a href="#" class="text-teal-600 hover:text-teal-900">View Details</a>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="px-6 py-4 whitespace-nowrap">Ethics in Education</td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">Renewal Due</span>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">Dec 31, 2025</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                        <a href="#" class="text-teal-600 hover:text-teal-900">Start Renewal</a>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="px-6 py-4 whitespace-nowrap">Digital Teaching Standards</td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Compliant</span>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">Mar 15, 2025</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                        <a href="#" class="text-teal-600 hover:text-teal-900">View Details</a>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Career Track Section -->
+            <section id="career" class="hidden space-y-6">
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
+                    <h2 class="text-2xl font-bold text-gray-800">Career Development</h2>
+                    <div class="mt-4 md:mt-0">
+                        <button onclick="openGoalModal()" class="bg-teal-600 text-white px-4 py-2 rounded-md hover:bg-teal-700 flex items-center">
+                            <i class="bi bi-plus-circle mr-2"></i>
+                            Add New Goal
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="grid md:grid-cols-3 gap-6">
+                    <!-- Career Path Timeline -->
+                    <div class="md:col-span-2">
+                        <div class="bg-white p-6 rounded-lg shadow-sm">
+                            <h3 class="text-xl font-semibold mb-6 text-gray-800">Your Career Path</h3>
+                            <div class="relative">
+                                <div class="absolute left-0 top-0 bottom-0 w-[2px] bg-gray-200"></div>
+                                
+                                <div class="pl-8 pb-8 relative timeline-item">
+                                    <h4 class="font-bold text-teal-700">Education Specialist</h4>
+                                    <p class="text-gray-500 text-sm mb-2">Current Position</p>
+                                    <div class="p-3 bg-teal-50 border border-teal-200 rounded-lg">
+                                        <p class="text-gray-700 mb-2">Required Skills:</p>
+                                        <div class="flex flex-wrap gap-2 mb-2">
+                                            <span class="px-2 py-1 bg-teal-100 text-teal-800 rounded-full text-xs">Teaching</span>
+                                            <span class="px-2 py-1 bg-teal-100 text-teal-800 rounded-full text-xs">Curriculum Development</span>
+                                            <span class="px-2 py-1 bg-teal-100 text-teal-800 rounded-full text-xs">Digital Tools</span>
+                                        </div>
+                                        <div class="flex justify-between">
+                                            <span class="text-sm text-teal-700 font-medium">Competency: 85%</span>
+                                            <button class="text-sm text-teal-700 hover:underline" onclick="showCareerDetails('education-specialist')">View Details</button>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="pl-8 pb-8 relative timeline-item">
+                                    <h4 class="font-bold text-gray-700">Education Coordinator</h4>
+                                    <p class="text-gray-500 text-sm mb-2">Next Career Step</p>
+                                    <div class="p-3 bg-gray-50 border border-gray-200 rounded-lg">
+                                        <p class="text-gray-700 mb-2">Required Skills:</p>
+                                        <div class="flex flex-wrap gap-2 mb-2">
+                                            <span class="px-2 py-1 bg-gray-200 text-gray-800 rounded-full text-xs">Leadership</span>
+                                            <span class="px-2 py-1 bg-gray-200 text-gray-800 rounded-full text-xs">Program Management</span>
+                                            <span class="px-2 py-1 bg-gray-200 text-gray-800 rounded-full text-xs">Budget Planning</span>
+                                        </div>
+                                        <div class="flex justify-between">
+                                            <span class="text-sm text-gray-700 font-medium">Competency: 45%</span>
+                                            <button class="text-sm text-teal-700 hover:underline" onclick="showSuggestedCourses()">Suggested Courses</button>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="pl-8 pb-8 relative timeline-item">
+                                    <h4 class="font-bold text-gray-500">Education Director</h4>
+                                    <p class="text-gray-500 text-sm mb-2">Future Goal</p>
+                                    <div class="p-3 bg-gray-50 border border-gray-200 rounded-lg opacity-70">
+                                        <p class="text-gray-700 mb-2">Required Skills:</p>
+                                        <div class="flex flex-wrap gap-2 mb-2">
+                                            <span class="px-2 py-1 bg-gray-200 text-gray-800 rounded-full text-xs">Strategic Planning</span>
+                                            <span class="px-2 py-1 bg-gray-200 text-gray-800 rounded-full text-xs">Policy Development</span>
+                                            <span class="px-2 py-1 bg-gray-200 text-gray-800 rounded-full text-xs">Stakeholder Management</span>
+                                        </div>
+                                        <div class="flex justify-between">
+                                            <span class="text-sm text-gray-700 font-medium">Competency: 20%</span>
+                                            <button class="text-sm text-teal-700 hover:underline">Long-term Plan</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Skills and Goals -->
+                    <div class="space-y-6">
+                        <!-- Skills Progress -->
+                        <div class="bg-white p-6 rounded-lg shadow-sm">
+                            <h3 class="text-xl font-semibold mb-4">Skills Progress</h3>
+                            <div id="skillsProgress" class="space-y-4">
+                                <div class="loader mx-auto"></div>
+                            </div>
+                            <button class="mt-4 text-teal-600 hover:text-teal-800 text-sm font-medium flex items-center">
+                                <i class="bi bi-plus-circle mr-1"></i> Add New Skill
+                            </button>
+                        </div>
+                        
+                        <!-- Personal Goals -->
+                        <div class="bg-white p-6 rounded-lg shadow-sm">
+                            <h3 class="text-xl font-semibold mb-4">Personal Development Goals</h3>
+                            <div id="personalGoals" class="space-y-4">
+                                <div class="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                                    <div class="flex justify-between items-start">
+                                        <h4 class="font-bold text-blue-800">Complete Leadership Certification</h4>
+                                        <span class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">In Progress</span>
+                                    </div>
+                                    <p class="text-sm text-gray-600 my-2">Target Date: March 15, 2025</p>
+                                    <div class="w-full bg-gray-200 rounded-full h-2.5">
+                                        <div class="bg-blue-600 h-2.5 rounded-full" style="width: 60%"></div>
+                                    </div>
+                                </div>
+                                
+                                <div class="p-3 bg-green-50 border border-green-200 rounded-lg">
+                                    <div class="flex justify-between items-start">
+                                        <h4 class="font-bold text-green-800">Mentor 2 Junior Staff Members</h4>
+                                        <span class="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">Ongoing</span>
+                                    </div>
+                                    <p class="text-sm text-gray-600 my-2">1 of 2 mentorships established</p>
+                                    <div class="w-full bg-gray-200 rounded-full h-2.5">
+                                        <div class="bg-green-600 h-2.5 rounded-full" style="width: 50%"></div>
+                                    </div>
+                                </div>
+                                
+                                <div class="p-3 bg-gray-100 border border-gray-200 rounded-lg">
+                                    <div class="flex justify-between items-start">
+                                        <h4 class="font-bold text-gray-800">Publish Educational Research Paper</h4>
+                                        <span class="text-xs bg-gray-200 text-gray-800 px-2 py-1 rounded-full">Not Started</span>
+                                    </div>
+                                    <p class="text-sm text-gray-600 my-2">Target Date: July 30, 2025</p>
+                                    <div class="w-full bg-gray-200 rounded-full h-2.5">
+                                        <div class="bg-gray-500 h-2.5 rounded-full" style="width: 0%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Recommended Development -->
+                <div class="bg-white p-6 rounded-lg shadow-sm">
+                    <h3 class="text-xl font-semibold mb-4">Recommended for Your Career Growth</h3>
+                    <div class="grid md:grid-cols-3 gap-4">
+                        <div class="border rounded-lg p-4 hover:shadow-md transition-all duration-300">
+                            <div class="flex justify-between">
+                                <h4 class="font-medium text-teal-700">Leadership Fundamentals</h4>
+                                <i class="bi bi-book text-teal-600"></i>
+                            </div>
+                            <p class="text-sm text-gray-600 my-2">This course will help you develop essential leadership skills needed for your next career step.</p>
+                            <button class="text-sm text-white bg-teal-600 px-3 py-1 rounded hover:bg-teal-700" onclick="openCourseVideo('https://www.youtube.com/embed/e6zyG47jJrs')">Enroll Now</button>
+                        </div>
+                        <div class="border rounded-lg p-4 hover:shadow-md transition-all duration-300">
+                            <div class="flex justify-between">
+                                <h4 class="font-medium text-teal-700">Budget Management</h4>
+                                <i class="bi bi-calculator text-teal-600"></i>
+                            </div>
+                            <p class="text-sm text-gray-600 my-2">Learn financial planning and budget management for educational programs.</p>
+                            <button class="text-sm text-white bg-teal-600 px-3 py-1 rounded hover:bg-teal-700" onclick="openCourseVideo('https://www.youtube.com/embed/pZP7ubgT8YM')">Enroll Now</button>
+                        </div>
+                        <div class="border rounded-lg p-4 hover:shadow-md transition-all duration-300">
+                            <div class="flex justify-between">
+                                <h4 class="font-medium text-teal-700">Team Coordination</h4>
+                                <i class="bi bi-people text-teal-600"></i>
+                            </div>
+                            <p class="text-sm text-gray-600 my-2">Develop skills to effectively manage and coordinate educational teams.</p>
+                            <button class="text-sm text-white bg-teal-600 px-3 py-1 rounded hover:bg-teal-700" onclick="openCourseVideo('https://www.youtube.com/embed/fz4HyxrnyZc')">Enroll Now</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Government Compliance Section -->
+            <section id="compliance" class="hidden space-y-6">
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
+                    <h2 class="text-2xl font-bold text-gray-800">Government Training Compliance</h2>
+                    <div class="mt-4 md:mt-0">
+                        <button class="bg-teal-600 text-white px-4 py-2 rounded-md hover:bg-teal-700 flex items-center" onclick="generateComplianceReport()">
+                            <i class="bi bi-download mr-2"></i>
+                            Export Compliance Report
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Compliance Status Overview -->
+                <div class="bg-white p-6 rounded-lg shadow-sm">
+                    <div class="flex flex-col md:flex-row items-center mb-6">
+                        <div class="w-40 h-40 relative mb-4 md:mb-0 md:mr-8">
+                            <svg viewBox="0 0 36 36" class="circular-chart" width="160" height="160">
+                                <path class="circle-bg" d="M18 2.0845
+                                    a 15.9155 15.9155 0 0 1 0 31.831
+                                    a 15.9155 15.9155 0 0 1 0 -31.831"
+                                    fill="none" stroke="#eee" stroke-width="2"/>
+                                <path id="completionRing" class="circle" stroke-dasharray="75, 100" d="M18 2.0845
+                                    a 15.9155 15.9155 0 0 1 0 31.831
+                                    a 15.9155 15.9155 0 0 1 0 -31.831"
+                                    fill="none" stroke="#4db6ac" stroke-width="2"/>
+                                <text x="18" y="20.5" class="percentage" text-anchor="middle" font-size="8" fill="#666">75%</text>
+                                <text x="18" y="24.5" class="percentage" text-anchor="middle" font-size="3" fill="#666">Compliance Rate</text>
+                            </svg>
+                        </div>
+                        <div class="flex-1">
+                            <h3 class="text-lg font-semibold text-gray-800 mb-2">Overall Compliance Status</h3>
+                            <p class="text-gray-600 mb-4">You have completed 9 out of 12 mandatory government training requirements.</p>
+                            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+                                <div class="bg-green-50 p-3 rounded-lg border border-green-100">
+                                    <div class="text-green-700 font-bold text-xl">9</div>
+                                    <div class="text-sm text-gray-600">Completed</div>
+                                </div>
+                                <div class="bg-yellow-50 p-3 rounded-lg border border-yellow-100">
+                                    <div class="text-yellow-700 font-bold text-xl">2</div>
+                                    <div class="text-sm text-gray-600">In Progress</div>
+                                </div>
+                                <div class="bg-red-50 p-3 rounded-lg border border-red-100">
+                                    <div class="text-red-700 font-bold text-xl">1</div>
+                                    <div class="text-sm text-gray-600">Overdue</div>
+                                </div>
+                                <div class="bg-gray-50 p-3 rounded-lg border border-gray-100">
+                                    <div class="text-gray-700 font-bold text-xl">2</div>
+                                    <div class="text-sm text-gray-600">Upcoming</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-4">
+                        <h4 class="font-semibold text-gray-800 mb-2">Recent Notifications</h4>
+                        <div class="border-l-4 border-amber-500 bg-amber-50 p-4 rounded-r-lg mb-4">
+                            <div class="flex items-start">
+                                <i class="bi bi-exclamation-triangle text-amber-600 mr-3 text-lg"></i>
+                                <div>
+                                    <p class="font-medium text-amber-800">Ethics in Education training deadline approaching</p>
+                                    <p class="text-sm text-gray-600">Due in 15 days - December 31, 2025</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="border-l-4 border-red-500 bg-red-50 p-4 rounded-r-lg">
+                            <div class="flex items-start">
+                                <i class="bi bi-x-circle text-red-600 mr-3 text-lg"></i>
+                                <div>
+                                    <p class="font-medium text-red-800">Student Privacy Regulations training is overdue</p>
+                                    <p class="text-sm text-gray-600">Due date was November 30, 2025</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Required Training Courses -->
+                <div class="bg-white p-6 rounded-lg shadow-sm">
+                    <h3 class="text-xl font-semibold mb-4 text-gray-800">Mandatory Government Training</h3>
+                    
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Course</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Deadline</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Progress</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                <tr>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="text-sm font-medium text-gray-900">Data Privacy Certification</div>
+                                        <div class="text-xs text-gray-500">Federal Requirement</div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">Compliance</span>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Jan 5, 2025</td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Completed</span>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="w-full bg-gray-200 rounded-full h-2 max-w-xs">
+                                            <div class="bg-green-600 h-2 rounded-full" style="width: 100%"></div>
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                        <button onclick="generateCertificateForDownload('Data Privacy Certification')" class="text-teal-600 hover:text-teal-900 mr-3">View Certificate</button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="text-sm font-medium text-gray-900">Ethics in Education</div>
+                                        <div class="text-xs text-gray-500">State Requirement</div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-purple-100 text-purple-800">Ethics</span>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Dec 31, 2025</td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">In Progress</span>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="w-full bg-gray-200 rounded-full h-2 max-w-xs">
+                                            <div class="bg-yellow-500 h-2 rounded-full" style="width: 65%"></div>
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                        <button class="bg-teal-600 text-white px-3 py-1 rounded hover:bg-teal-700" onclick="openCourseVideo('https://www.youtube.com/embed/ZGnzur0_Lq0')">Continue</button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="text-sm font-medium text-gray-900">Student Privacy Regulations</div>
+                                        <div class="text-xs text-gray-500">Federal Requirement</div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">Compliance</span>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <span class="text-red-600 text-sm font-medium">Nov 30, 2025</span>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">Overdue</span>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="w-full bg-gray-200 rounded-full h-2 max-w-xs">
+                                            <div class="bg-red-500 h-2 rounded-full" style="width: 25%"></div>
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                        <button class="bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700" onclick="openCourseVideo('https://www.youtube.com/embed/MyjFxroM7XQ')">Start Now</button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="text-sm font-medium text-gray-900">Digital Teaching Standards</div>
+                                        <div class="text-xs text-gray-500">Industry Standard</div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Digital Skills</span>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Mar 15, 2025</td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Completed</span>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="w-full bg-gray-200 rounded-full h-2 max-w-xs">
+                                            <div class="bg-green-600 h-2 rounded-full" style="width: 100%"></div>
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                        <button onclick="generateCertificateForDownload('Digital Teaching Standards')" class="text-teal-600 hover:text-teal-900 mr-3">View Certificate</button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                
+                <!-- Upcoming Requirements -->
+                <div class="grid md:grid-cols-2 gap-6">
+                    <div class="bg-white p-6 rounded-lg shadow-sm">
+                        <h3 class="text-xl font-semibold mb-4 text-gray-800">Upcoming Requirements</h3>
+                        <div class="space-y-4">
+                            <div class="p-4 border rounded-lg flex items-center">
+                                <div class="w-12 h-12 bg-amber-100 rounded-full flex items-center justify-center mr-4">
+                                    <i class="bi bi-calendar-event text-amber-600 text-xl"></i>
+                                </div>
+                                <div class="flex-1">
+                                    <h4 class="font-medium">Annual Safety Training</h4>
+                                    <p class="text-sm text-gray-500">Required by Feb 15, 2025</p>
+                                </div>
+                                <button class="bg-teal-600 text-white px-3 py-1 rounded hover:bg-teal-700" onclick="openCourseVideo('https://www.youtube.com/embed/3ed2iPrNKRY')">Enroll</button>
+                            </div>
+                            <div class="p-4 border rounded-lg flex items-center">
+                                <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mr-4">
+                                    <i class="bi bi-shield-check text-blue-600 text-xl"></i>
+                                </div>
+                                <div class="flex-1">
+                                    <h4 class="font-medium">Updated Security Protocols</h4>
+                                    <p class="text-sm text-gray-500">Required by Mar 1, 2025</p>
+                                </div>
+                                <button class="bg-teal-600 text-white px-3 py-1 rounded hover:bg-teal-700" onclick="openCourseVideo('https://www.youtube.com/embed/inWWhr5tnEA')">Enroll</button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white p-6 rounded-lg shadow-sm">
+                        <h3 class="text-xl font-semibold mb-4 text-gray-800">Compliance Calendar</h3>
+                        <div class="border rounded-lg p-4">
+                            <div class="text-center mb-4">
+                                <h4 class="font-medium text-gray-700">February 2025</h4>
+                            </div>
+                            <div class="grid grid-cols-7 gap-1 text-center text-sm">
+                                <div class="text-gray-500">S</div>
+                                <div class="text-gray-500">M</div>
+                                <div class="text-gray-500">T</div>
+                                <div class="text-gray-500">W</div>
+                                <div class="text-gray-500">T</div>
+                                <div class="text-gray-500">F</div>
+                                <div class="text-gray-500">S</div>
+                                <!-- Dates -->
+                                <div class="text-gray-400">26</div>
+                                <div class="text-gray-400">27</div>
+                                <div class="text-gray-400">28</div>
+                                <div class="text-gray-400">29</div>
+                                <div class="text-gray-400">30</div>
+                                <div class="text-gray-400">31</div>
+                                <div>1</div>
+                                <div>2</div>
+                                <div>3</div>
+                                <div>4</div>
+                                <div>5</div>
+                                <div>6</div>
+                                <div>7</div>
+                                <div>8</div>
+                                <div>9</div>
+                                <div>10</div>
+                                <div class="bg-teal-100 rounded-full w-7 h-7 flex items-center justify-center mx-auto">11</div>
+                                <div>12</div>
+                                <div>13</div>
+                                <div>14</div>
+                                <div class="bg-red-100 rounded-full w-7 h-7 flex items-center justify-center mx-auto text-red-700">15</div>
+                                <div>16</div>
+                                <div>17</div>
+                                <div>18</div>
+                                <div>19</div>
+                                <div class="bg-amber-100 rounded-full w-7 h-7 flex items-center justify-center mx-auto">20</div>
+                                <div>21</div>
+                                <div>22</div>
+                                <div>23</div>
+                                <div>24</div>
+                                <div>25</div>
+                                <div>26</div>
+                                <div>27</div>
+                                <div>28</div>
+                            </div>
+                            <div class="mt-4">
+                                <div class="flex items-center mb-2">
+                                    <div class="w-3 h-3 bg-red-100 rounded-full mr-2"></div>
+                                    <span class="text-xs text-gray-600">Deadline</span>
+                                </div>
+                                <div class="flex items-center">
+                                    <div class="w-3 h-3 bg-teal-100 rounded-full mr-2"></div>
+                                    <span class="text-xs text-gray-600">Training Session</span>
+                                </div>
+                                <div class="flex items-center">
+                                    <div class="w-3 h-3 bg-amber-100 rounded-full mr-2"></div>
+                                    <span class="text-xs text-gray-600">Assessment</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Role-specific sections visible only to specific roles -->
+            <!-- Admin Section -->
+            <section id="adminSection" class="hidden space-y-6">
+                <div class="bg-white p-6 rounded-lg shadow-sm">
+                    <h3 class="text-xl font-bold mb-4 text-gray-800">Administrator Tools</h3>
+                    <div class="grid md:grid-cols-3 gap-4">
+                        <div class="border rounded-lg p-4 hover:shadow-md transition-all duration-300">
+                            <div class="flex justify-between mb-3">
+                                <h4 class="font-medium text-teal-700">User Management</h4>
+                                <i class="bi bi-person-gear text-teal-600"></i>
+                            </div>
+                            <p class="text-sm text-gray-600 mb-3">Manage user accounts, roles, and permissions.</p>
+                            <button class="text-sm text-white bg-teal-600 px-3 py-1 rounded hover:bg-teal-700">Manage Users</button>
+                        </div>
+                        <div class="border rounded-lg p-4 hover:shadow-md transition-all duration-300">
+                            <div class="flex justify-between mb-3">
+                                <h4 class="font-medium text-teal-700">Course Administration</h4>
+                                <i class="bi bi-book-half text-teal-600"></i>
+                            </div>
+                            <p class="text-sm text-gray-600 mb-3">Add, edit, or archive courses in the catalog.</p>
+                            <button class="text-sm text-white bg-teal-600 px-3 py-1 rounded hover:bg-teal-700">Manage Courses</button>
+                        </div>
+                        <div class="border rounded-lg p-4 hover:shadow-md transition-all duration-300">
+                            <div class="flex justify-between mb-3">
+                                <h4 class="font-medium text-teal-700">System Reports</h4>
+                                <i class="bi bi-file-earmark-bar-graph text-teal-600"></i>
+                            </div>
+                            <p class="text-sm text-gray-600 mb-3">Generate and export system-wide reports.</p>
+                            <button class="text-sm text-white bg-teal-600 px-3 py-1 rounded hover:bg-teal-700">View Reports</button>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-6">
+                        <h4 class="font-semibold text-gray-800 mb-3">Compliance Overview</h4>
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full bg-white border">
+                                <thead>
+                                    <tr>
+                                        <th class="py-2 px-4 border-b">Department</th>
+                                        <th class="py-2 px-4 border-b">Users</th>
+                                        <th class="py-2 px-4 border-b">Compliance Rate</th>
+                                        <th class="py-2 px-4 border-b">Critical Issues</th>
+                                        <th class="py-2 px-4 border-b">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td class="py-2 px-4 border-b">Elementary Education</td>
+                                        <td class="py-2 px-4 border-b">48</td>
+                                        <td class="py-2 px-4 border-b">92%</td>
+                                        <td class="py-2 px-4 border-b">1</td>
+                                        <td class="py-2 px-4 border-b">
+                                            <button class="text-teal-600 hover:text-teal-800 text-sm">View Details</button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="py-2 px-4 border-b">Secondary Education</td>
+                                        <td class="py-2 px-4 border-b">36</td>
+                                        <td class="py-2 px-4 border-b">78%</td>
+                                        <td class="py-2 px-4 border-b">5</td>
+                                        <td class="py-2 px-4 border-b">
+                                            <button class="text-teal-600 hover:text-teal-800 text-sm">View Details</button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="py-2 px-4 border-b">Special Education</td>
+                                        <td class="py-2 px-4 border-b">22</td>
+                                        <td class="py-2 px-4 border-b">85%</td>
+                                        <td class="py-2 px-4 border-b">2</td>
+                                        <td class="py-2 px-4 border-b">
+                                            <button class="text-teal-600 hover:text-teal-800 text-sm">View Details</button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- Educator Section -->
+            <section id="educatorSection" class="hidden space-y-6">
+                <div class="bg-white p-6 rounded-lg shadow-sm">
+                    <h3 class="text-xl font-bold mb-4 text-gray-800">Course Management</h3>
+                    <div class="flex flex-col md:flex-row justify-between items-center mb-6">
+                        <div class="flex items-center space-x-2">
+                            <select class="border rounded-md px-4 py-2">
+                                <option>All My Courses</option>
+                                <option>Active Courses</option>
+                                <option>Archived Courses</option>
+                                <option>Draft Courses</option>
+                            </select>
+                            <button class="bg-teal-600 text-white px-4 py-2 rounded hover:bg-teal-700 flex items-center">
+                                <i class="bi bi-plus-lg mr-2"></i>
+                                Create New Course
+                            </button>
+                        </div>
+                        <div class="mt-4 md:mt-0">
+                            <div class="relative">
+                                <input type="text" placeholder="Search your courses..." class="border rounded-md pl-10 pr-4 py-2 w-full md:w-64">
+                                <i class="bi bi-search absolute left-3 top-3 text-gray-400"></i>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <div class="border rounded-lg overflow-hidden hover:shadow-md transition-all duration-300">
+                            <div class="bg-teal-100 p-4 flex justify-between">
+                                <h4 class="font-semibold">Leadership Fundamentals</h4>
+                                <span class="bg-teal-600 text-white text-xs px-2 py-1 rounded-full">Active</span>
+                            </div>
+                            <div class="p-4">
+                                <div class="mb-2">
+                                    <p class="text-sm text-gray-600">Enrolled: 42 users</p>
+                                    <p class="text-sm text-gray-600">Average completion: 68%</p>
+                                </div>
+                                <div class="flex justify-between mt-4">
+                                    <button class="text-sm text-teal-700 hover:underline">View Analytics</button>
+                                    <button class="text-sm text-teal-700 hover:underline">Edit Course</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="border rounded-lg overflow-hidden hover:shadow-md transition-all duration-300">
+                            <div class="bg-blue-100 p-4 flex justify-between">
+                                <h4 class="font-semibold">Advanced Teaching Methods</h4>
+                                <span class="bg-blue-600 text-white text-xs px-2 py-1 rounded-full">Active</span>
+                            </div>
+                            <div class="p-4">
+                                <div class="mb-2">
+                                    <p class="text-sm text-gray-600">Enrolled: 35 users</p>
+                                    <p class="text-sm text-gray-600">Average completion: 45%</p>
+                                </div>
+                                <div class="flex justify-between mt-4">
+                                    <button class="text-sm text-teal-700 hover:underline">View Analytics</button>
+                                    <button class="text-sm text-teal-700 hover:underline">Edit Course</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="border rounded-lg overflow-hidden hover:shadow-md transition-all duration-300">
+                            <div class="bg-green-100 p-4 flex justify-between">
+                                <h4 class="font-semibold">Digital Learning Techniques</h4>
+                                <span class="bg-gray-600 text-white text-xs px-2 py-1 rounded-full">Draft</span>
+                            </div>
+                            <div class="p-4">
+                                <div class="mb-2">
+                                    <p class="text-sm text-gray-600">Not published yet</p>
+                                    <p class="text-sm text-gray-600">Last edited: Feb 5, 2025</p>
+                                </div>
+                                <div class="flex justify-between mt-4">
+                                    <button class="text-sm text-teal-700 hover:underline">Continue Editing</button>
+                                    <button class="text-sm bg-teal-600 text-white px-3 py-1 rounded hover:bg-teal-700">Publish</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-6">
+                        <h4 class="font-semibold text-gray-800 mb-3">Student Progress Tracking</h4>
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full bg-white border">
+                                <thead>
+                                    <tr>
+                                        <th class="py-2 px-4 border-b">Course</th>
+                                        <th class="py-2 px-4 border-b">Enrolled</th>
+                                        <th class="py-2 px-4 border-b">Avg. Progress</th>
+                                        <th class="py-2 px-4 border-b">Completion Rate</th>
+                                        <th class="py-2 px-4 border-b">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td class="py-2 px-4 border-b">Leadership Fundamentals</td>
+                                        <td class="py-2 px-4 border-b">42</td>
+                                        <td class="py-2 px-4 border-b">68%</td>
+                                        <td class="py-2 px-4 border-b">24/42</td>
+                                        <td class="py-2 px-4 border-b">
+                                            <button class="text-teal-600 hover:text-teal-800 text-sm">View Students</button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="py-2 px-4 border-b">Advanced Teaching Methods</td>
+                                        <td class="py-2 px-4 border-b">35</td>
+                                        <td class="py-2 px-4 border-b">45%</td>
+                                        <td class="py-2 px-4 border-b">12/35</td>
+                                        <td class="py-2 px-4 border-b">
+                                            <button class="text-teal-600 hover:text-teal-800 text-sm">View Students</button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="py-2 px-4 border-b">Ethics in Education</td>
+                                        <td class="py-2 px-4 border-b">52</td>
+                                        <td class="py-2 px-4 border-b">82%</td>
+                                        <td class="py-2 px-4 border-b">38/52</td>
+                                        <td class="py-2 px-4 border-b">
+                                            <button class="text-teal-600 hover:text-teal-800 text-sm">View Students</button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- HR Section -->
+            <section id="hrSection" class="hidden space-y-6">
+                <div class="bg-white p-6 rounded-lg shadow-sm">
+                    <h3 class="text-xl font-bold mb-4 text-gray-800">Employee Development Management</h3>
+                    <div class="grid md:grid-cols-3 gap-4 mb-6">
+                        <div class="bg-teal-50 p-4 rounded-lg border border-teal-100">
+                            <div class="flex justify-between items-center mb-2">
+                                <h4 class="font-medium text-teal-800">Training Completion</h4>
+                                <i class="bi bi-bar-chart-fill text-teal-600 text-xl"></i>
+                            </div>
+                            <div class="text-3xl font-bold text-teal-700">78%</div>
+                            <p class="text-sm text-gray-600">Organizational average</p>
+                        </div>
+                        <div class="bg-blue-50 p-4 rounded-lg border border-blue-100">
+                            <div class="flex justify-between items-center mb-2">
+                                <h4 class="font-medium text-blue-800">Compliance Status</h4>
+                                <i class="bi bi-shield-check text-blue-600 text-xl"></i>
+                            </div>
+                            <div class="text-3xl font-bold text-blue-700">92%</div>
+                            <p class="text-sm text-gray-600">Compliant employees</p>
+                        </div>
+                        <div class="bg-purple-50 p-4 rounded-lg border border-purple-100">
+                            <div class="flex justify-between items-center mb-2">
+                                <h4 class="font-medium text-purple-800">Career Growth</h4>
+                                <i class="bi bi-graph-up-arrow text-purple-600 text-xl"></i>
+                            </div>
+                            <div class="text-3xl font-bold text-purple-700">24</div>
+                            <p class="text-sm text-gray-600">Promotions this year</p>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-6">
+                        <h4 class="font-semibold text-gray-800 mb-3">Department Training Status</h4>
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full bg-white border">
+                                <thead>
+                                    <tr>
+                                        <th class="py-2 px-4 border-b">Department</th>
+                                        <th class="py-2 px-4 border-b">Employees</th>
+                                        <th class="py-2 px-4 border-b">Training Completion</th>
+                                        <th class="py-2 px-4 border-b">Compliance Status</th>
+                                        <th class="py-2 px-4 border-b">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td class="py-2 px-4 border-b">Elementary Education</td>
+                                        <td class="py-2 px-4 border-b">48</td>
+                                        <td class="py-2 px-4 border-b">
+                                            <div class="flex items-center">
+                                                <div class="w-full bg-gray-200 rounded-full h-2 mr-2 max-w-xs">
+                                                    <div class="bg-green-600 h-2 rounded-full" style="width: 85%"></div>
+                                                </div>
+                                                <span>85%</span>
+                                            </div>
+                                        </td>
+                                        <td class="py-2 px-4 border-b">
+                                            <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">High</span>
+                                        </td>
+                                        <td class="py-2 px-4 border-b">
+                                            <button class="text-teal-600 hover:text-teal-800 text-sm">View Details</button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="py-2 px-4 border-b">Secondary Education</td>
+                                        <td class="py-2 px-4 border-b">36</td>
+                                        <td class="py-2 px-4 border-b">
+                                            <div class="flex items-center">
+                                                <div class="w-full bg-gray-200 rounded-full h-2 mr-2 max-w-xs">
+                                                    <div class="bg-yellow-500 h-2 rounded-full" style="width: 62%"></div>
+                                                </div>
+                                                <span>62%</span>
+                                            </div>
+                                        </td>
+                                        <td class="py-2 px-4 border-b">
+                                            <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">Medium</span>
+                                        </td>
+                                        <td class="py-2 px-4 border-b">
+                                            <button class="text-teal-600 hover:text-teal-800 text-sm">View Details</button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="py-2 px-4 border-b">Administration</td>
+                                        <td class="py-2 px-4 border-b">18</td>
+                                        <td class="py-2 px-4 border-b">
+                                            <div class="flex items-center">
+                                                <div class="w-full bg-gray-200 rounded-full h-2 mr-2 max-w-xs">
+                                                    <div class="bg-red-500 h-2 rounded-full" style="width: 45%"></div>
+                                                </div>
+                                                <span>45%</span>
+                                            </div>
+                                        </td>
+                                        <td class="py-2 px-4 border-b">
+                                            <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">Low</span>
+                                        </td>
+                                        <td class="py-2 px-4 border-b">
+                                            <button class="text-teal-600 hover:text-teal-800 text-sm">View Details</button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    <div class="grid md:grid-cols-2 gap-6">
+                        <div>
+                            <h4 class="font-semibold text-gray-800 mb-3">Course Feedback Summary</h4>
+                            <div class="border rounded-lg p-4">
+                                <div class="mb-4">
+                                    <h5 class="font-medium text-gray-700 mb-2">Leadership Fundamentals</h5>
+                                    <div class="flex items-center mb-1">
+                                        <div class="text-yellow-500 flex mr-2">
+                                            <i class="bi bi-star-fill"></i>
+                                            <i class="bi bi-star-fill"></i>
+                                            <i class="bi bi-star-fill"></i>
+                                            <i class="bi bi-star-fill"></i>
+                                            <i class="bi bi-star-half"></i>
+                                        </div>
+                                        <span class="text-sm text-gray-600">4.5/5 (42 reviews)</span>
+                                    </div>
+                                    <p class="text-sm text-gray-600">Top comment: "Excellent practical examples and case studies"</p>
+                                </div>
+                                
+                                <div class="mb-4">
+                                    <h5 class="font-medium text-gray-700 mb-2">Advanced Teaching Methods</h5>
+                                    <div class="flex items-center mb-1">
+                                        <div class="text-yellow-500 flex mr-2">
+                                            <i class="bi bi-star-fill"></i>
+                                            <i class="bi bi-star-fill"></i>
+                                            <i class="bi bi-star-fill"></i>
+                                            <i class="bi bi-star"></i>
+                                            <i class="bi bi-star"></i>
+                                        </div>
+                                        <span class="text-sm text-gray-600">3.1/5 (35 reviews)</span>
+                                    </div>
+                                    <p class="text-sm text-gray-600">Top comment: "Needs more interactive content and practical examples"</p>
+                                </div>
+                                
+                                <div>
+                                    <h5 class="font-medium text-gray-700 mb-2">Ethics in Education</h5>
+                                    <div class="flex items-center mb-1">
+                                        <div class="text-yellow-500 flex mr-2">
+                                            <i class="bi bi-star-fill"></i>
+                                            <i class="bi bi-star-fill"></i>
+                                            <i class="bi bi-star-fill"></i>
+                                            <i class="bi bi-star-fill"></i>
+                                            <i class="bi bi-star"></i>
+                                        </div>
+                                        <span class="text-sm text-gray-600">4.2/5 (52 reviews)</span>
+                                    </div>
+                                    <p class="text-sm text-gray-600">Top comment: "Very informative and well structured content"</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <h4 class="font-semibold text-gray-800 mb-3">Development Reports</h4>
+                            <div class="space-y-3">
+                                <button class="w-full bg-white border rounded-lg p-3 text-left hover:bg-teal-50 transition-all flex justify-between items-center" onclick="generateTrainingReport()">
+                                    <span>Training Compliance Report</span>
+                                    <i class="bi bi-download text-teal-600"></i>
+                                </button>
+                                <button class="w-full bg-white border rounded-lg p-3 text-left hover:bg-teal-50 transition-all flex justify-between items-center" onclick="generateSkillsGapReport()">
+                                    <span>Skills Gap Analysis</span>
+                                    <i class="bi bi-download text-teal-600"></i>
+                                </button>
+                                <button class="w-full bg-white border rounded-lg p-3 text-left hover:bg-teal-50 transition-all flex justify-between items-center" onclick="generateLearningHoursReport()">
+                                    <span>Learning Hours Summary</span>
+                                    <i class="bi bi-download text-teal-600"></i>
+                                </button>
+                                <button class="w-full bg-white border rounded-lg p-3 text-left hover:bg-teal-50 transition-all flex justify-between items-center" onclick="generateCareerReport()">
+                                    <span>Career Development Tracking</span>
+                                    <i class="bi bi-download text-teal-600"></i>
+                                </button>
+                                <button class="w-full bg-white border rounded-lg p-3 text-left hover:bg-teal-50 transition-all flex justify-between items-center" onclick="generateCertificationReport()">
+                                    <span>Certification Status Report</span>
+                                    <i class="bi bi-download text-teal-600"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </section>
+
+    <!-- Upload Certificate Modal -->
+    <div id="uploadModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center hidden">
+        <div class="bg-white p-6 rounded-lg shadow-lg w-full max-w-md">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-bold text-gray-800">Upload Certificate</h3>
+                <button onclick="closeUploadModal()" class="text-gray-600 hover:text-gray-800">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            </div>
+            
+            <form id="certificateUploadForm" class="space-y-4">
+                <div>
+                    <label for="certificateTitle" class="block text-gray-700 font-medium mb-2">Certificate Title</label>
+                    <input type="text" id="certificateTitle" class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-teal-500" required>
+                </div>
+                
+                <div>
+                    <label for="certificateType" class="block text-gray-700 font-medium mb-2">Certificate Type</label>
+                    <select id="certificateType" class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-teal-500" required>
+                        <option value="">Select a type</option>
+                        <option value="Professional">Professional</option>
+                        <option value="Compliance">Compliance</option>
+                        <option value="Educational">Educational</option>
+                        <option value="Government">Government</option>
+                    </select>
+                </div>
+                
+                <div>
+                    <label for="issueDate" class="block text-gray-700 font-medium mb-2">Issue Date</label>
+                    <input type="date" id="issueDate" class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-teal-500" required>
+                </div>
+                
+                <div>
+                    <label for="expiryDate" class="block text-gray-700 font-medium mb-2">Expiry Date</label>
+                    <input type="date" id="expiryDate" class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-teal-500">
+                </div>
+                
+                <div>
+                    <label class="block text-gray-700 font-medium mb-2">Upload Certificate File</label>
+                    <div class="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
+                        <i class="bi bi-upload text-gray-400 text-3xl mb-2"></i>
+                        <p class="text-sm text-gray-500 mb-2">Drag and drop a file here or click to browse</p>
+                        <input type="file" id="certificateFile" class="hidden">
+                        <button type="button" onclick="document.getElementById('certificateFile').click()" class="bg-teal-600 text-white px-4 py-2 rounded-md hover:bg-teal-700 inline-flex items-center">
+                            <i class="bi bi-file-earmark-arrow-up mr-2"></i>
+                            Select File
+                        </button>
+                        <p id="fileName" class="mt-2 text-sm text-gray-600"></p>
+                    </div>
+                </div>
+                
+                <div class="flex justify-end space-x-3 mt-6">
+                    <button type="button" onclick="closeUploadModal()" class="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-100">Cancel</button>
+                    <button type="submit" class="bg-teal-600 text-white px-4 py-2 rounded-md hover:bg-teal-700">
+                        Upload Certificate
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Add Goal Modal -->
+    <div id="goalModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center hidden">
+        <div class="bg-white p-6 rounded-lg shadow-lg w-full max-w-md">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-bold text-gray-800">Add Development Goal</h3>
+                <button onclick="closeGoalModal()" class="text-gray-600 hover:text-gray-800">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            </div>
+            
+            <form id="goalForm" class="space-y-4">
+                <div>
+                    <label for="goalTitle" class="block text-gray-700 font-medium mb-2">Goal Title</label>
+                    <input type="text" id="goalTitle" class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-teal-500" required>
+                </div>
+                
+                <div>
+                    <label for="goalType" class="block text-gray-700 font-medium mb-2">Goal Type</label>
+                    <select id="goalType" class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-teal-500" required>
+                        <option value="">Select a type</option>
+                        <option value="Certification">Certification</option>
+                        <option value="Skill">Skill Development</option>
+                        <option value="Project">Project</option>
+                        <option value="Education">Education</option>
+                        <option value="Mentorship">Mentorship</option>
+                    </select>
+                </div>
+                
+                <div>
+                    <label for="goalDescription" class="block text-gray-700 font-medium mb-2">Description</label>
+                    <textarea id="goalDescription" rows="3" class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-teal-500" required></textarea>
+                </div>
+                
+                <div>
+                    <label for="targetDate" class="block text-gray-700 font-medium mb-2">Target Completion Date</label>
+                    <input type="date" id="targetDate" class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-teal-500" required>
+                </div>
+                
+                <div>
+                    <label class="block text-gray-700 font-medium mb-2">Align with Career Path</label>
+                    <div class="space-y-2">
+                        <label class="flex items-center">
+                            <input type="radio" name="careerAlignment" value="current" class="mr-2">
+                            <span>Current Position (Education Specialist)</span>
+                        </label>
+                        <label class="flex items-center">
+                            <input type="radio" name="careerAlignment" value="next" class="mr-2" checked>
+                            <span>Next Career Step (Education Coordinator)</span>
+                        </label>
+                        <label class="flex items-center">
+                            <input type="radio" name="careerAlignment" value="future" class="mr-2">
+                            <span>Future Goal (Education Director)</span>
+                        </label>
+                    </div>
+                </div>
+                
+                <div class="flex justify-end space-x-3 mt-6">
+                    <button type="button" onclick="closeGoalModal()" class="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-100">Cancel</button>
+                    <button type="submit" class="bg-teal-600 text-white px-4 py-2 rounded-md hover:bg-teal-700">
+                        Add Goal
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Course Video Modal -->
+    <div id="courseVideoModal" class="fixed inset-0 bg-black bg-opacity-75 z-50 flex items-center justify-center hidden">
+        <div class="bg-white p-4 rounded-lg shadow-lg w-full max-w-4xl">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-bold text-gray-800">Course Content</h3>
+                <button onclick="closeCourseVideo()" class="text-gray-600 hover:text-gray-800">
+                    <i class="bi bi-x-lg text-xl"></i>
+                </button>
+            </div>
+            
+            <div class="aspect-w-16 aspect-h-9 mb-4">
+                <iframe id="courseVideoFrame" class="w-full h-96" src="" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+            </div>
+            
+            <div class="flex justify-end space-x-3 mt-4">
+                <button onclick="closeCourseVideo()" class="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-100">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Course Details Modal -->
+    <div id="courseDetailsModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center hidden">
+        <div class="bg-white p-6 rounded-lg shadow-lg w-full max-w-3xl">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-2xl font-bold text-gray-800">Education Technology Integration</h3>
+                <button onclick="closeCourseDetailsModal()" class="text-gray-600 hover:text-gray-800">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="md:col-span-2">
+                    <h4 class="text-lg font-semibold text-gray-700 mb-2">Course Description</h4>
+                    <p class="text-gray-600 mb-4">
+                        This comprehensive course teaches educators how to effectively incorporate technology into their classrooms to enhance student learning outcomes. You'll learn about digital tools, implementation strategies, evaluation methods, and best practices for creating engaging tech-enhanced learning experiences.
+                    </p>
+                    
+                    <h4 class="text-lg font-semibold text-gray-700 mb-2">What You'll Learn</h4>
+                    <ul class="list-disc list-inside mb-4 text-gray-600 space-y-1">
+                        <li>Digital learning platforms and tools for education</li>
+                        <li>Technology integration frameworks and models</li>
+                        <li>Designing tech-enhanced learning activities</li>
+                        <li>Assessing digital learning outcomes</li>
+                        <li>Creating inclusive digital learning environments</li>
+                        <li>Data privacy and security considerations</li>
+                    </ul>
+                    
+                    <h4 class="text-lg font-semibold text-gray-700 mb-2">Course Details</h4>
+                    <div class="grid grid-cols-2 gap-4 text-sm">
+                        <div>
+                            <p class="text-gray-600"><span class="font-medium">Duration:</span> 8 weeks</p>
+                            <p class="text-gray-600"><span class="font-medium">Effort:</span> 3-4 hours per week</p>
+                            <p class="text-gray-600"><span class="font-medium">Level:</span> Intermediate</p>
+                        </div>
+                        <div>
+                            <p class="text-gray-600"><span class="font-medium">Format:</span> Self-paced with deadlines</p>
+                            <p class="text-gray-600"><span class="font-medium">Assessment:</span> Quizzes, Projects</p>
+                            <p class="text-gray-600"><span class="font-medium">Certificate:</span> Upon completion</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="bg-gray-50 rounded-lg p-4 border">
+                    <div class="text-center mb-4">
+                        <div class="bg-teal-100 w-24 h-24 rounded-full mx-auto flex items-center justify-center">
+                            <i class="bi bi-laptop text-4xl text-teal-600"></i>
+                        </div>
+                        <h5 class="font-semibold mt-2">Featured Course</h5>
+                    </div>
+                    
+                    <div class="space-y-3 mb-6">
+                        <div class="flex justify-between text-sm">
+                            <span class="text-gray-600">Enrollment:</span>
+                            <span class="font-medium">Open</span>
+                        </div>
+                        <div class="flex justify-between text-sm">
+                            <span class="text-gray-600">Next Start Date:</span>
+                            <span class="font-medium">March 15, 2025</span>
+                        </div>
+                        <div class="flex justify-between text-sm">
+                            <span class="text-gray-600">Enrolled:</span>
+                            <span class="font-medium">247 participants</span>
+                        </div>
+                        <div class="flex justify-between text-sm">
+                            <span class="text-gray-600">Rating:</span>
+                            <span class="font-medium flex items-center">
+                                <span class="text-yellow-500 mr-1">
+                                    <i class="bi bi-star-fill"></i>
+                                </span>
+                                4.8/5 (87 reviews)
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <button onclick="openEnrollmentForm()" class="w-full bg-teal-600 text-white py-2 rounded font-medium hover:bg-teal-700 transition-colors mb-2">
+                        Enroll Now
+                    </button>
+                    <button onclick="openCourseVideo('https://www.youtube.com/embed/JKat_7628Tc')" class="w-full border border-teal-600 text-teal-600 py-2 rounded font-medium hover:bg-teal-50 transition-colors">
+                        Watch Preview
+                    </button>
+                </div>
+            </div>
+            
+            <div class="mt-6 border-t pt-4 flex justify-end">
+                <button onclick="closeCourseDetailsModal()" class="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-100 mr-2">Close</button>
+                <button onclick="openEnrollmentForm()" class="bg-teal-600 text-white px-4 py-2 rounded-md hover:bg-teal-700">
+                    Enroll Now
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Enrollment Form Modal -->
+    <div id="enrollmentModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center hidden">
+        <div class="bg-white p-6 rounded-lg shadow-lg w-full max-w-md">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-bold text-gray-800">Course Enrollment</h3>
+                <button onclick="closeEnrollmentForm()" class="text-gray-600 hover:text-gray-800">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            </div>
+            
+            <form id="enrollmentForm" class="space-y-4">
+                <div class="bg-teal-50 p-3 rounded mb-4">
+                    <h4 class="font-medium text-teal-800 mb-1">Education Technology Integration</h4>
+                    <p class="text-sm text-gray-600">Start Date: March 15, 2025</p>
+                </div>
+                
+                <div>
+                    <label for="enrollReason" class="block text-gray-700 font-medium mb-2">Why are you interested in this course?</label>
+                    <select id="enrollReason" class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-teal-500" required>
+                        <option value="">Select a reason</option>
+                        <option value="career">Career advancement</option>
+                        <option value="personal">Personal development</option>
+                        <option value="required">Required for my position</option>
+                        <option value="interest">Interest in the topic</option>
+                    </select>
+                </div>
+                
+                <div>
+                    <label for="preferredSchedule" class="block text-gray-700 font-medium mb-2">Preferred Study Schedule</label>
+                    <select id="preferredSchedule" class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-teal-500" required>
+                        <option value="">Select a schedule</option>
+                        <option value="weekday">Weekdays during work hours</option>
+                        <option value="evening">Weekday evenings</option>
+                        <option value="weekend">Weekends</option>
+                        <option value="flexible">Flexible schedule</option>
+                    </select>
+                </div>
+                
+                <div>
+                    <label for="enrollmentGoals" class="block text-gray-700 font-medium mb-2">Your Learning Goals</label>
+                    <textarea id="enrollmentGoals" rows="3" class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-teal-500" placeholder="What do you hope to achieve by taking this course?"></textarea>
+                </div>
+                
+                <div>
+                    <label class="block text-gray-700 font-medium mb-2">Add to Learning Path</label>
+                    <div class="space-y-2">
+                        <label class="flex items-center">
+                            <input type="checkbox" name="learningPath" value="career" class="mr-2" checked>
+                            <span>Add to Career Development Path</span>
+                        </label>
+                        <label class="flex items-center">
+                            <input type="checkbox" name="learningPath" value="certificate" class="mr-2">
+                            <span>Work toward Technology Integration Certificate</span>
+                        </label>
+                    </div>
+                </div>
+                
+                <div class="flex justify-end space-x-3 mt-6">
+                    <button type="button" onclick="closeEnrollmentForm()" class="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-100">Cancel</button>
+                    <button type="submit" class="bg-teal-600 text-white px-4 py-2 rounded-md hover:bg-teal-700">
+                        Complete Enrollment
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Career Details Modal -->
+    <div id="careerDetailsModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center hidden">
+        <div class="bg-white p-6 rounded-lg shadow-lg w-full max-w-3xl">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-2xl font-bold text-gray-800">Education Specialist</h3>
+                <button onclick="closeCareerDetailsModal()" class="text-gray-600 hover:text-gray-800">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="md:col-span-2">
+                    <h4 class="text-lg font-semibold text-gray-700 mb-2">Position Description</h4>
+                    <p class="text-gray-600 mb-4">
+                        As an Education Specialist, you are responsible for developing curriculum materials, providing instructional support, and implementing educational programs. You work directly with teachers and students to enhance learning outcomes and support educational initiatives.
+                    </p>
+                    
+                    <h4 class="text-lg font-semibold text-gray-700 mb-2">Core Responsibilities</h4>
+                    <ul class="list-disc list-inside mb-4 text-gray-600 space-y-1">
+                        <li>Develop and implement curriculum materials and learning resources</li>
+                        <li>Provide instructional support to teachers and educational staff</li>
+                        <li>Evaluate and select appropriate educational technologies</li>
+                        <li>Assess student learning outcomes and program effectiveness</li>
+                        <li>Collaborate with teachers to enhance classroom instruction</li>
+                        <li>Stay current with educational research and best practices</li>
+                    </ul>
+                    
+                    <h4 class="text-lg font-semibold text-gray-700 mb-2">Required Skills</h4>
+                    <div class="flex flex-wrap gap-2 mb-4">
+                        <span class="px-2 py-1 bg-teal-100 text-teal-800 rounded-full text-sm">Teaching (85%)</span>
+                        <span class="px-2 py-1 bg-teal-100 text-teal-800 rounded-full text-sm">Curriculum Development (90%)</span>
+                        <span class="px-2 py-1 bg-teal-100 text-teal-800 rounded-full text-sm">Digital Tools (80%)</span>
+                        <span class="px-2 py-1 bg-gray-100 text-gray-800 rounded-full text-sm">Assessment Design (75%)</span>
+                        <span class="px-2 py-1 bg-gray-100 text-gray-800 rounded-full text-sm">Educational Research (65%)</span>
+                    </div>
+                </div>
+                
+                <div class="bg-gray-50 rounded-lg p-4 border">
+                    <div class="text-center mb-4">
+                        <div class="bg-teal-100 w-24 h-24 rounded-full mx-auto flex items-center justify-center">
+                            <i class="bi bi-person-workspace text-4xl text-teal-600"></i>
+                        </div>
+                        <h5 class="font-semibold mt-2">Current Position</h5>
+                    </div>
+                    
+                    <div class="space-y-3 mb-6">
+                        <div class="flex justify-between text-sm">
+                            <span class="text-gray-600">Experience Level:</span>
+                            <span class="font-medium">4 years</span>
+                        </div>
+                        <div class="flex justify-between text-sm">
+                            <span class="text-gray-600">Overall Competency:</span>
+                            <span class="font-medium">85%</span>
+                        </div>
+                        <div class="flex justify-between text-sm">
+                            <span class="text-gray-600">Next Review:</span>
+                            <span class="font-medium">June 15, 2025</span>
+                        </div>
+                    </div>
+                    
+                    <div class="rounded-lg bg-teal-50 p-3 border border-teal-200 mb-2">
+                        <h5 class="font-medium text-teal-800 mb-1">Advancement Opportunity</h5>
+                        <p class="text-sm text-gray-600">You're on track for advancement to Education Coordinator by 2026.</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mt-6 border-t pt-4">
+                <h4 class="font-semibold text-gray-800 mb-3">Development Recommendations</h4>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="border rounded p-3">
+                        <div class="flex items-center mb-2">
+                            <i class="bi bi-book text-teal-600 mr-2"></i>
+                            <span class="font-medium">Leadership Fundamentals</span>
+                        </div>
+                        <p class="text-sm text-gray-600 mb-2">Develop leadership skills required for advancement to Education Coordinator.</p>
+                        <button class="text-sm text-teal-600 hover:underline" onclick="openCourseVideo('https://www.youtube.com/embed/e6zyG47jJrs')">Start Course</button>
+                    </div>
+                    <div class="border rounded p-3">
+                        <div class="flex items-center mb-2">
+                            <i class="bi bi-graph-up text-teal-600 mr-2"></i>
+                            <span class="font-medium">Program Management</span>
+                        </div>
+                        <p class="text-sm text-gray-600 mb-2">Learn program management skills for coordinating educational programs.</p>
+                        <button class="text-sm text-teal-600 hover:underline" onclick="openCourseVideo('https://www.youtube.com/embed/pZP7ubgT8YM')">Start Course</button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mt-4 flex justify-end">
+                <button onclick="closeCareerDetailsModal()" class="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-100">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Suggested Courses Modal -->
+    <div id="suggestedCoursesModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center hidden">
+        <div class="bg-white p-6 rounded-lg shadow-lg w-full max-w-3xl">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-2xl font-bold text-gray-800">Suggested Courses for Education Coordinator Path</h3>
+                <button onclick="closeSuggestedCoursesModal()" class="text-gray-600 hover:text-gray-800">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            </div>
+            
+            <div class="mb-4">
+                <p class="text-gray-600">These courses will help you develop the skills needed for advancement to the Education Coordinator role. Focus on leadership, program management, and budget planning competencies.</p>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                <div class="border rounded-lg overflow-hidden hover:shadow-md transition-all duration-300">
+                    <div class="bg-teal-100 p-3 flex justify-between items-center">
+                        <h4 class="font-semibold">Leadership Fundamentals</h4>
+                        <span class="text-xs bg-teal-600 text-white px-2 py-1 rounded-full">Priority</span>
+                    </div>
+                    <div class="p-4">
+                        <p class="text-sm text-gray-600 mb-3">Master essential leadership skills, team management, and decision-making practices needed for educational leadership roles.</p>
+                        <div class="flex items-center text-sm text-gray-500 mb-3">
+                            <i class="bi bi-clock mr-1"></i>
+                            <span>8 weeks</span>
+                            <span class="mx-2">•</span>
+                            <i class="bi bi-bar-chart mr-1"></i>
+                            <span>Intermediate</span>
+                        </div>
+                        <button class="bg-teal-600 text-white px-3 py-1 rounded text-sm hover:bg-teal-700" onclick="openCourseVideo('https://www.youtube.com/embed/e6zyG47jJrs')">Start Course</button>
+                    </div>
+                </div>
+                
+                <div class="border rounded-lg overflow-hidden hover:shadow-md transition-all duration-300">
+                    <div class="bg-blue-100 p-3 flex justify-between items-center">
+                        <h4 class="font-semibold">Program Management</h4>
+                        <span class="text-xs bg-blue-600 text-white px-2 py-1 rounded-full">Essential</span>
+                    </div>
+                    <div class="p-4">
+                        <p class="text-sm text-gray-600 mb-3">Develop skills to plan, implement, and oversee educational programs, including scheduling, resource allocation, and evaluation.</p>
+                        <div class="flex items-center text-sm text-gray-500 mb-3">
+                            <i class="bi bi-clock mr-1"></i>
+                            <span>10 weeks</span>
+                            <span class="mx-2">•</span>
+                            <i class="bi bi-bar-chart mr-1"></i>
+                            <span>Intermediate</span>
+                        </div>
+                        <button class="bg-teal-600 text-white px-3 py-1 rounded text-sm hover:bg-teal-700" onclick="openCourseVideo('https://www.youtube.com/embed/pZP7ubgT8YM')">Start Course</button>
+                    </div>
+                </div>
+                
+                <div class="border rounded-lg overflow-hidden hover:shadow-md transition-all duration-300">
+                    <div class="bg-green-100 p-3 flex justify-between items-center">
+                        <h4 class="font-semibold">Budget Planning for Education</h4>
+                        <span class="text-xs bg-green-600 text-white px-2 py-1 rounded-full">Recommended</span>
+                    </div>
+                    <div class="p-4">
+                        <p class="text-sm text-gray-600 mb-3">Learn financial planning principles, budget development, and resource allocation strategies for educational programs.</p>
+                        <div class="flex items-center text-sm text-gray-500 mb-3">
+                            <i class="bi bi-clock mr-1"></i>
+                            <span>6 weeks</span>
+                            <span class="mx-2">•</span>
+                            <i class="bi bi-bar-chart mr-1"></i>
+                            <span>Intermediate</span>
+                        </div>
+                        <button class="bg-teal-600 text-white px-3 py-1 rounded text-sm hover:bg-teal-700" onclick="openCourseVideo('https://www.youtube.com/embed/pZP7ubgT8YM')">Start Course</button>
+                    </div>
+                </div>
+                
+                <div class="border rounded-lg overflow-hidden hover:shadow-md transition-all duration-300">
+                    <div class="bg-purple-100 p-3 flex justify-between items-center">
+                        <h4 class="font-semibold">Educational Policy Implementation</h4>
+                        <span class="text-xs bg-purple-600 text-white px-2 py-1 rounded-full">Recommended</span>
+                    </div>
+                    <div class="p-4">
+                        <p class="text-sm text-gray-600 mb-3">Understand how to interpret, implement, and ensure compliance with educational policies and regulations.</p>
+                        <div class="flex items-center text-sm text-gray-500 mb-3">
+                            <i class="bi bi-clock mr-1"></i>
+                            <span>8 weeks</span>
+                            <span class="mx-2">•</span>
+                            <i class="bi bi-bar-chart mr-1"></i>
+                            <span>Advanced</span>
+                        </div>
+                        <button class="bg-teal-600 text-white px-3 py-1 rounded text-sm hover:bg-teal-700" onclick="openCourseVideo('https://www.youtube.com/embed/Pt8EfVsLDY4')">Start Course</button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-teal-50 p-4 rounded-lg border border-teal-200 mb-6">
+                <h4 class="font-semibold text-teal-800 mb-2">Skills Gap Analysis</h4>
+                <p class="text-gray-600 text-sm mb-3">Based on your current competencies, we recommend focusing on these areas:</p>
+                <div class="space-y-2">
+                    <div>
+                        <div class="flex justify-between mb-1">
+                            <span class="text-sm font-medium">Leadership</span>
+                            <span class="text-sm font-medium">45%</span>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-2">
+                            <div class="bg-teal-600 h-2 rounded-full" style="width: 45%"></div>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="flex justify-between mb-1">
+                            <span class="text-sm font-medium">Program Management</span>
+                            <span class="text-sm font-medium">40%</span>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-2">
+                            <div class="bg-teal-600 h-2 rounded-full" style="width: 40%"></div>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="flex justify-between mb-1">
+                            <span class="text-sm font-medium">Budget Planning</span>
+                            <span class="text-sm font-medium">35%</span>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-2">
+                            <div class="bg-teal-600 h-2 rounded-full" style="width: 35%"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="flex justify-end">
+                <button onclick="closeSuggestedCoursesModal()" class="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-100">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Certificate Template (hidden) -->
+    <div id="certificateTemplate" class="certificate-template">
+        <div id="certificateContent" class="bg-white p-10 border-8 border-teal-600 relative" style="width: 800px; height: 600px;">
+            <div class="absolute top-0 left-0 w-full h-full">
+                <div class="absolute top-6 left-6 right-6 bottom-6 border-2 border-teal-300"></div>
+            </div>
+            <div class="text-center">
+                <h1 class="text-5xl font-bold mb-2 text-teal-700 font-serif">Certificate of Completion</h1>
+                <p class="text-xl mb-8">This certifies that</p>
+                <p class="text-3xl font-bold mb-8 text-gray-800 font-serif" id="certificateName">John Doe</p>
+                <p class="text-xl mb-2">has successfully completed the course</p>
+                <p class="text-3xl font-bold mb-8 text-teal-800 font-serif" id="certificateCourse">Data Privacy Certification</p>
+                <p class="text-xl mb-8">with the EduDev Portal</p>
+                
+                <div class="flex justify-between items-end mt-16">
+                    <div>
+                        <div class="w-40 h-0.5 bg-gray-800 mb-1"></div>
+                        <p class="text-sm">Date Issued</p>
+                        <p id="certificateDate" class="font-medium">March 10, 2025</p>
+                    </div>
+                    <div class="flex flex-col items-center">
+                        <div class="w-20 h-20 mb-2">
+                            <svg viewBox="0 0 100 100" class="w-full h-full">
+                                <circle cx="50" cy="50" r="45" fill="#e0f7fa" stroke="#00acc1" stroke-width="2"/>
+                                <path d="M30 50 L45 65 L70 35" fill="none" stroke="#00acc1" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                        </div>
+                        <p class="text-sm text-gray-600">Verified Certificate</p>
+                    </div>
+                    <div>
+                        <div class="w-40 h-0.5 bg-gray-800 mb-1"></div>
+                        <p class="text-sm">Director of Education</p>
+                        <p class="font-medium">Dr. Sarah Johnson</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Compliance Report Template (hidden) -->
+    <div id="complianceReportTemplate" class="certificate-template">
+        <div id="complianceReportContent" class="bg-white p-10 border-2 border-teal-200 relative" style="width: 800px; height: 1100px;">
+            <div class="text-center mb-8">
+                <h1 class="text-3xl font-bold mb-2 text-teal-700">Government Training Compliance Report</h1>
+                <p class="text-md text-gray-600">EduDev Portal</p>
+                <p class="text-md text-gray-600" id="reportDate">Generated on: March 10, 2025</p>
+            </div>
+            
+            <div class="mb-6">
+                <h2 class="text-xl font-bold mb-2 text-gray-800">Employee Information</h2>
+                <div class="grid grid-cols-2 gap-4 border-t border-b border-gray-200 py-4">
+                    <div>
+                        <p><span class="font-medium">Name:</span> <span id="reportName">John Doe</span></p>
+                        <p><span class="font-medium">Employee ID:</span> EMP-2023-1456</p>
+                        <p><span class="font-medium">Department:</span> Education</p>
+                    </div>
+                    <div>
+                        <p><span class="font-medium">Position:</span> Education Specialist</p>
+                        <p><span class="font-medium">Compliance Status:</span> <span class="text-green-600 font-medium">75% Compliant</span></p>
+                        <p><span class="font-medium">Report Period:</span> 2025 Q1</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mb-6">
+                <h2 class="text-xl font-bold mb-2 text-gray-800">Compliance Summary</h2>
+                <div class="grid grid-cols-4 gap-4 mb-4 text-center">
+                    <div class="bg-green-50 p-3 rounded-lg border border-green-100">
+                        <div class="text-green-700 font-bold text-xl">9</div>
+                        <div class="text-sm text-gray-600">Completed</div>
+                    </div>
+                    <div class="bg-yellow-50 p-3 rounded-lg border border-yellow-100">
+                        <div class="text-yellow-700 font-bold text-xl">2</div>
+                        <div class="text-sm text-gray-600">In Progress</div>
+                    </div>
+                    <div class="bg-red-50 p-3 rounded-lg border border-red-100">
+                        <div class="text-red-700 font-bold text-xl">1</div>
+                        <div class="text-sm text-gray-600">Overdue</div>
+                    </div>
+                    <div class="bg-gray-50 p-3 rounded-lg border border-gray-100">
+                        <div class="text-gray-700 font-bold text-xl">2</div>
+                        <div class="text-sm text-gray-600">Upcoming</div>
+                    </div>
+                </div>
+                
+                <div class="w-full bg-gray-200 rounded-full h-4 mb-2">
+                    <div class="bg-teal-600 h-4 rounded-full" style="width: 75%"></div>
+                </div>
+                <div class="flex justify-between text-sm text-gray-600">
+                    <span>0%</span>
+                    <span>Overall Compliance: 75%</span>
+                    <span>100%</span>
+                </div>
+            </div>
+            
+            <div class="mb-6">
+                <h2 class="text-xl font-bold mb-2 text-gray-800">Required Training Status</h2>
+                <table class="min-w-full border">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="py-2 px-4 border-b text-left text-xs font-medium text-gray-500 uppercase">Course</th>
+                            <th class="py-2 px-4 border-b text-left text-xs font-medium text-gray-500 uppercase">Category</th>
+                            <th class="py-2 px-4 border-b text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                            <th class="py-2 px-4 border-b text-left text-xs font-medium text-gray-500 uppercase">Completion</th>
+                            <th class="py-2 px-4 border-b text-left text-xs font-medium text-gray-500 uppercase">Deadline</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white">
+                        <tr>
+                            <td class="py-2 px-4 border-b">Data Privacy Certification</td>
+                            <td class="py-2 px-4 border-b">Compliance</td>
+                            <td class="py-2 px-4 border-b"><span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Completed</span></td>
+                            <td class="py-2 px-4 border-b">100%</td>
+                            <td class="py-2 px-4 border-b">Jan 5, 2025</td>
+                        </tr>
+                        <tr>
+                            <td class="py-2 px-4 border-b">Ethics in Education</td>
+                            <td class="py-2 px-4 border-b">Ethics</td>
+                            <td class="py-2 px-4 border-b"><span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">In Progress</span></td>
+                            <td class="py-2 px-4 border-b">65%</td>
+                            <td class="py-2 px-4 border-b">Dec 31, 2025</td>
+                        </tr>
+                        <tr>
+                            <td class="py-2 px-4 border-b">Student Privacy Regulations</td>
+                            <td class="py-2 px-4 border-b">Compliance</td>
+                            <td class="py-2 px-4 border-b"><span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">Overdue</span></td>
+                            <td class="py-2 px-4 border-b">25%</td>
+                            <td class="py-2 px-4 border-b">Nov 30, 2025</td>
+                        </tr>
+                        <tr>
+                            <td class="py-2 px-4 border-b">Digital Teaching Standards</td>
+                            <td class="py-2 px-4 border-b">Digital Skills</td>
+                            <td class="py-2 px-4 border-b"><span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Completed</span></td>
+                            <td class="py-2 px-4 border-b">100%</td>
+                            <td class="py-2 px-4 border-b">Mar 15, 2025</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            
+            <div>
+                <h2 class="text-xl font-bold mb-2 text-gray-800">Recommendations</h2>
+                <ul class="list-disc list-inside space-y-1 text-gray-600 mb-4">
+                    <li>Complete the overdue "Student Privacy Regulations" course by April 15, 2025</li>
+                    <li>Schedule time to complete "Ethics in Education" before the end of the year</li>
+                    <li>Review upcoming requirements for Q2 2025</li>
+                </ul>
+                <div class="border-t border-gray-200 pt-4 text-sm text-gray-500">
+                    <p>This report is automatically generated by the EduDev Portal system and serves as an official record of training compliance.</p>
+                    <p>For questions or assistance, contact the HR department at hr@edudev.org.</p>
+                </div>
+            </div>
+            
+            <div class="absolute bottom-6 right-6 text-gray-400 text-xs">
+                <p>Report ID: COMP-2025-Q1-78945</p>
+                <p id="reportTimestamp">Generated: March 10, 2025, 10:45 AM</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // MongoDB Integration
+        const appSlug = 'edudev-portal-123456';
+        const apiUrl = 'https://r0c8kgwocscg8gsokogwwsw4.zetaverse.one/mongodb';
+        const authToken = '2OpAC2MBYJdnsoBb92kNltDk0II2';
+
+        // Login/Register Tab Switch Functions
+        function showLoginTab() {
+            document.getElementById('loginTabBtn').classList.add('bg-teal-600', 'text-white');
+            document.getElementById('loginTabBtn').classList.remove('bg-gray-100', 'text-gray-700');
+            document.getElementById('registerTabBtn').classList.add('bg-gray-100', 'text-gray-700');
+            document.getElementById('registerTabBtn').classList.remove('bg-teal-600', 'text-white');
+            document.getElementById('loginFormContainer').classList.remove('hidden');
+            document.getElementById('registerFormContainer').classList.add('hidden');
+            document.getElementById('registrationSuccess').classList.add('hidden');
+        }
+        
+        function showRegisterTab() {
+            document.getElementById('registerTabBtn').classList.add('bg-teal-600', 'text-white');
+            document.getElementById('registerTabBtn').classList.remove('bg-gray-100', 'text-gray-700');
+            document.getElementById('loginTabBtn').classList.add('bg-gray-100', 'text-gray-700');
+            document.getElementById('loginTabBtn').classList.remove('bg-teal-600', 'text-white');
+            document.getElementById('registerFormContainer').classList.remove('hidden');
+            document.getElementById('loginFormContainer').classList.add('hidden');
+        }
+
+        // Register User
+        document.getElementById('registerForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const fullName = document.getElementById('registerFullName').value;
+            const email = document.getElementById('registerEmail').value;
+            const username = document.getElementById('registerUsername').value;
+            const password = document.getElementById('registerPassword').value;
+            const confirmPassword = document.getElementById('registerConfirmPassword').value;
+            const role = document.getElementById('registerRole').value;
+            
+            // Validate form
+            if (password !== confirmPassword) {
+                alert('Passwords do not match!');
+                return;
+            }
+            
+            try {
+                // Create user in MongoDB
+                const userData = {
+                    fullName,
+                    email,
+                    username,
+                    password, // In a real app, this should be hashed!
+                    role,
+                    createdAt: new Date().toISOString(),
+                    lastLogin: null
+                };
+                
+                const response = await fetchData('create', 'users', null, userData);
+                
+                if (response && response.success) {
+                    // Show success message
+                    document.getElementById('registrationSuccess').classList.remove('hidden');
+                    document.getElementById('registerForm').reset();
+                    
+                    // Switch back to login tab after 2 seconds
+                    setTimeout(() => {
+                        showLoginTab();
+                    }, 2000);
+                } else {
+                    alert('Registration failed. Please try again.');
+                }
+            } catch (error) {
+                console.error('Error during registration:', error);
+                alert('Registration failed. Please try again.');
+            }
+        });
+
+        // Login Functionality
+        document.getElementById('loginForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            
+            // Simple validation
+            if (!username || !password) {
+                document.getElementById('loginError').classList.remove('hidden');
+                return;
+            }
+            
+            try {
+                // Check if user exists in MongoDB
+                const result = await fetchData('read', 'users', { username });
+                
+                if (result && result.success && result.result.length > 0) {
+                    const user = result.result[0];
+                    
+                    // In a real app, you'd compare hashed passwords
+                    if (user.password === password) {
+                        // Update last login
+                        await fetchData('update', 'users', { _id: user._id }, { lastLogin: new Date().toISOString() });
+                        
+                        // Set user info in sessionStorage
+                        sessionStorage.setItem('loggedIn', 'true');
+                        sessionStorage.setItem('username', user.username);
+                        sessionStorage.setItem('fullName', user.fullName);
+                        sessionStorage.setItem('userRole', user.role);
+                        sessionStorage.setItem('userId', user._id);
+                        
+                        // Show main app and hide login
+                        document.getElementById('loginPage').classList.add('hidden');
+                        document.getElementById('mainApp').classList.remove('hidden');
+                        
+                        // Update username display
+                        document.getElementById('currentUsername').textContent = user.fullName || user.username;
+                        document.getElementById('dashboardUsername').textContent = user.fullName.split(' ')[0] || user.username;
+                        
+                        // Set role in selector
+                        document.getElementById('roleSelector').value = user.role;
+                        document.getElementById('mobileRoleSelector').value = user.role;
+                        
+                        // Initialize app data
+                        switchRole(); // Update UI based on role
+                        initializeData();
+                    } else {
+                        document.getElementById('loginError').classList.remove('hidden');
+                    }
+                } else {
+                    // For demo purposes, allow login with default credentials
+                    if (username === 'demo' && password === 'password') {
+                        // Set user info in sessionStorage
+                        sessionStorage.setItem('loggedIn', 'true');
+                        sessionStorage.setItem('username', username);
+                        sessionStorage.setItem('fullName', 'John Doe');
+                        sessionStorage.setItem('userRole', 'employee');
+                        
+                        // Show main app and hide login
+                        document.getElementById('loginPage').classList.add('hidden');
+                        document.getElementById('mainApp').classList.remove('hidden');
+                        
+                        // Update username display
+                        document.getElementById('currentUsername').textContent = 'John Doe';
+                        document.getElementById('dashboardUsername').textContent = 'John';
+                        
+                        // Initialize app data
+                        initializeData();
+                    } else {
+                        document.getElementById('loginError').classList.remove('hidden');
+                    }
+                }
+            } catch (error) {
+                console.error('Login error:', error);
+                document.getElementById('loginError').classList.remove('hidden');
+            }
+        });
+
+        // Logout Function
+        function logout() {
+            // Clear session data
+            sessionStorage.removeItem('loggedIn');
+            sessionStorage.removeItem('username');
+            sessionStorage.removeItem('fullName');
+            sessionStorage.removeItem('userRole');
+            sessionStorage.removeItem('userId');
+            
+            // Show login, hide main app
+            document.getElementById('loginPage').classList.remove('hidden');
+            document.getElementById('mainApp').classList.add('hidden');
+            
+            // Reset login form
+            document.getElementById('loginForm').reset();
+            document.getElementById('loginError').classList.add('hidden');
+            
+            // Switch to login tab
+            showLoginTab();
+        }
+
+        // Check if user is logged in on page load
+        window.addEventListener('DOMContentLoaded', function() {
+            const loggedIn = sessionStorage.getItem('loggedIn');
+            if (loggedIn === 'true') {
+                const username = sessionStorage.getItem('username') || 'demo';
+                const fullName = sessionStorage.getItem('fullName') || 'John Doe';
+                const userRole = sessionStorage.getItem('userRole') || 'employee';
+                
+                document.getElementById('loginPage').classList.add('hidden');
+                document.getElementById('mainApp').classList.remove('hidden');
+                document.getElementById('currentUsername').textContent = fullName;
+                document.getElementById('dashboardUsername').textContent = fullName.split(' ')[0];
+                
+                // Set role in selector
+                document.getElementById('roleSelector').value = userRole;
+                document.getElementById('mobileRoleSelector').value = userRole;
+                
+                switchRole(); // Update UI based on role
+                initializeData();
+            }
+        });
+
+        async function fetchData(action, collection, conditions = null, data = null) {
+            try {
+                // Show loaders
+                document.querySelectorAll('.loader').forEach(loader => {
+                    loader.style.display = 'block';
+                });
+                
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        appSlug,
+                        action,
+                        collection,
+                        conditions,
+                        data
+                    })
+                });
+                
+                // Hide loaders
+                document.querySelectorAll('.loader').forEach(loader => {
+                    loader.style.display = 'none';
+                });
+                
+                return await response.json();
+            } catch (error) {
+                console.error('API Error:', error);
+                
+                // Hide loaders on error
+                document.querySelectorAll('.loader').forEach(loader => {
+                    loader.style.display = 'none';
+                });
+                
+                return null;
+            }
+        }
+
+        // Initialize Data
+        async function initializeData() {
+            await loadActivities();
+            await loadCourses();
+            await loadCertifications();
+            await loadSkills();
+        }
+
+        // Activities
+        async function loadActivities() {
+            // First try to fetch from MongoDB
+            const activitiesResult = await fetchData('read', 'activities');
+            
+            // If we have results, use them
+            let activities;
+            if (activitiesResult && activitiesResult.success && activitiesResult.result.length > 0) {
+                activities = activitiesResult.result;
+            } else {
+                // Fallback to demo data
+                activities = [
+                    { title: 'Completed Leadership Basics Course', date: '2025-02-15', icon: 'bi-trophy-fill', iconColor: 'text-yellow-500' },
+                    { title: 'Started New Certification Program', date: '2025-02-10', icon: 'bi-award', iconColor: 'text-blue-500' },
+                    { title: 'Achieved Skill Milestone: Project Management', date: '2025-02-05', icon: 'bi-graph-up', iconColor: 'text-green-500' },
+                    { title: 'Joined Digital Education Community', date: '2025-01-20', icon: 'bi-people', iconColor: 'text-purple-500' }
+                ];
+                
+                // Store in MongoDB for future use
+                activities.forEach(async (activity) => {
+                    await fetchData('create', 'activities', null, activity);
+                });
+            }
+
+            const activitiesContainer = document.getElementById('activities');
+            activitiesContainer.innerHTML = activities.map(activity => `
+                <div class="flex items-start border-b pb-3">
+                    <div class="flex-shrink-0 mr-3">
+                        <div class="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
+                            <i class="bi ${activity.icon || 'bi-check-circle'} ${activity.iconColor || 'text-teal-500'}"></i>
+                        </div>
+                    </div>
+                    <div class="flex-grow">
+                        <p class="text-gray-700">${activity.title}</p>
+                        <span class="text-sm text-gray-500">${activity.date}</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Courses
+        async function loadCourses() {
+            // Try to fetch from MongoDB
+            const coursesResult = await fetchData('read', 'courses');
+            
+            // If we have results, use them
+            let courses;
+            if (coursesResult && coursesResult.success && coursesResult.result.length > 0) {
+                courses = coursesResult.result;
+            } else {
+                // Fallback to demo data
+                courses = [
+                    { 
+                      title: 'Leadership Fundamentals', 
+                      progress: 75, 
+                      category: 'Management', 
+                      image: 'leadership', 
+                      deadline: 'Feb 15, 2025', 
+                      status: 'inprogress',
+                      videoUrl: 'https://www.youtube.com/embed/e6zyG47jJrs'
+                    },
+                    { 
+                      title: 'Advanced Teaching Methods', 
+                      progress: 30, 
+                      category: 'Education', 
+                      image: 'teaching', 
+                      deadline: 'Mar 10, 2025', 
+                      status: 'inprogress',
+                      videoUrl: 'https://www.youtube.com/embed/Pt8EfVsLDY4'
+                    },
+                    { 
+                      title: 'Digital Transformation', 
+                      progress: 0, 
+                      category: 'Technology', 
+                      image: 'digital', 
+                      deadline: 'Apr 05, 2025', 
+                      status: 'recommended',
+                      videoUrl: 'https://www.youtube.com/embed/JKat_7628Tc'
+                    },
+                    { 
+                      title: 'Government Compliance Training', 
+                      progress: 100, 
+                      category: 'Compliance', 
+                      image: 'government', 
+                      deadline: 'Completed', 
+                      status: 'completed',
+                      videoUrl: 'https://www.youtube.com/embed/ZGnzur0_Lq0'
+                    },
+                    { 
+                      title: 'Effective Communication', 
+                      progress: 50, 
+                      category: 'Soft Skills', 
+                      image: 'communication', 
+                      deadline: 'Mar 20, 2025', 
+                      status: 'inprogress',
+                      videoUrl: 'https://www.youtube.com/embed/fz4HyxrnyZc'
+                    },
+                    { 
+                      title: 'Data Privacy and Security', 
+                      progress: 20, 
+                      category: 'Compliance', 
+                      image: 'security', 
+                      deadline: 'Apr 15, 2025', 
+                      status: 'mandatory',
+                      videoUrl: 'https://www.youtube.com/embed/MyjFxroM7XQ'
+                    },
+                    { 
+                      title: 'Inclusive Education Practices', 
+                      progress: 40, 
+                      category: 'Education', 
+                      image: 'inclusion', 
+                      deadline: 'Apr 20, 2025', 
+                      status: 'inprogress',
+                      videoUrl: 'https://www.youtube.com/embed/Pt8EfVsLDY4'
+                    },
+                    { 
+                      title: 'Educational Assessment Strategies', 
+                      progress: 100, 
+                      category: 'Education', 
+                      image: 'assessment', 
+                      deadline: 'Completed', 
+                      status: 'completed',
+                      videoUrl: 'https://www.youtube.com/embed/Pt8EfVsLDY4'
+                    },
+                    { 
+                      title: 'Curriculum Development', 
+                      progress: 0, 
+                      category: 'Education', 
+                      image: 'curriculum', 
+                      deadline: 'May 15, 2025', 
+                      status: 'recommended',
+                      videoUrl: 'https://www.youtube.com/embed/Pt8EfVsLDY4'
+                    }
+                ];
+                
+                // Store in MongoDB for future use
+                courses.forEach(async (course) => {
+                    await fetchData('create', 'courses', null, course);
+                });
+            }
+
+            const courseCatalog = document.getElementById('courseCatalog');
+            courseCatalog.innerHTML = courses.map(course => {
+                let bgColor = 'bg-gray-100';
+                let icon = 'bi-book';
+                
+                if (course.category === 'Management') {
+                    bgColor = 'bg-blue-100';
+                    icon = 'bi-people';
+                } else if (course.category === 'Education') {
+                    bgColor = 'bg-green-100';
+                    icon = 'bi-mortarboard-fill';
+                } else if (course.category === 'Technology') {
+                    bgColor = 'bg-purple-100';
+                    icon = 'bi-cpu';
+                } else if (course.category === 'Compliance') {
+                    bgColor = 'bg-red-100';
+                    icon = 'bi-shield-check';
+                } else if (course.category === 'Soft Skills') {
+                    bgColor = 'bg-yellow-100';
+                    icon = 'bi-chat-dots';
+                }
+                
+                const buttonText = course.progress === 0 ? 'Start Course' : 
+                                 course.progress === 100 ? 'View Certificate' : 'Continue Course';
+                
+                const videoUrl = course.videoUrl || 'https://www.youtube.com/embed/JKat_7628Tc';
+                
+                let statusBadge = '';
+                if (course.status === 'mandatory') {
+                    statusBadge = '<span class="absolute top-2 right-2 bg-red-600 text-white text-xs px-2 py-1 rounded-full">Mandatory</span>';
+                } else if (course.status === 'recommended') {
+                    statusBadge = '<span class="absolute top-2 right-2 bg-blue-600 text-white text-xs px-2 py-1 rounded-full">Recommended</span>';
+                }
+                
+                return `
+                <div class="bg-white border rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow course-card relative" data-category="${course.category}" data-status="${course.status}">
+                    ${statusBadge}
+                    <div class="h-32 ${bgColor} flex items-center justify-center">
+                        <i class="bi ${icon} text-4xl"></i>
+                    </div>
+                    <div class="p-4">
+                        <div class="flex justify-between items-start mb-2">
+                            <h3 class="font-semibold text-lg">${course.title}</h3>
+                            <span class="text-xs px-2 py-1 bg-gray-200 rounded-full">${course.category}</span>
+                        </div>
+                        <div class="mb-4">
+                            <div class="flex justify-between text-sm text-gray-600 mb-1">
+                                <span>Progress</span>
+                                <span>${course.progress}%</span>
+                            </div>
+                            <div class="w-full bg-gray-200 rounded-full h-2.5">
+                                <div class="bg-teal-600 h-2.5 rounded-full" style="width: ${course.progress}%"></div>
+                            </div>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-xs text-gray-500">Deadline: ${course.deadline}</span>
+                            <button class="bg-teal-600 text-white px-3 py-1 rounded text-sm hover:bg-teal-700" onclick="${course.progress === 100 ? `generateCertificateForDownload('${course.title}')` : `openCourseVideo('${videoUrl}')`}">${buttonText}</button>
+                        </div>
+                    </div>
+                </div>
+                `;
+            }).join('');
+        }
+
+        // Certifications
+        async function loadCertifications() {
+            // Try to fetch from MongoDB
+            const certificationsResult = await fetchData('read', 'certifications');
+            
+            // If we have results, use them
+            let certifications;
+            if (certificationsResult && certificationsResult.success && certificationsResult.result.length > 0) {
+                certifications = certificationsResult.result;
+            } else {
+                // Fallback to demo data
+                certifications = [
+                    { name: 'Education Leadership', issueDate: '2024-10-15', expires: '2025-10-15', status: 'active', icon: 'bi-award-fill', color: 'text-teal-600' },
+                    { name: 'Government Policy Implementation', issueDate: '2024-08-01', expires: '2025-08-01', status: 'active', icon: 'bi-building', color: 'text-blue-600' },
+                    { name: 'Digital Teaching Excellence', issueDate: '2024-06-20', expires: '2025-06-20', status: 'active', icon: 'bi-laptop', color: 'text-purple-600' },
+                    { name: 'Data Privacy Compliance', issueDate: '2024-01-10', expires: '2025-03-10', status: 'expiring', icon: 'bi-shield-lock', color: 'text-amber-600' },
+                    { name: 'Educational Assessment', issueDate: '2024-05-20', expires: '2025-05-20', status: 'active', icon: 'bi-clipboard-check', color: 'text-green-600' },
+                    { name: 'Classroom Management', issueDate: '2023-12-15', expires: '2024-12-15', status: 'expired', icon: 'bi-layout-text-window', color: 'text-red-600' },
+                    { name: 'Educational Technology', issueDate: 'Pending', expires: 'Pending', status: 'pending', icon: 'bi-pc-display', color: 'text-blue-600' },
+                    { name: 'Child Protection Standards', issueDate: 'Pending', expires: 'Pending', status: 'pending', icon: 'bi-shield-check', color: 'text-blue-600' }
+                ];
+                
+                // Store in MongoDB for future use
+                certifications.forEach(async (cert) => {
+                    await fetchData('create', 'certifications', null, cert);
+                });
+            }
+
+            const certificationsList = document.getElementById('certificationsList');
+            certificationsList.innerHTML = certifications.map(cert => {
+                let statusClass = cert.status === 'active' ? 'bg-green-100 text-green-800' : 
+                                cert.status === 'expiring' ? 'bg-yellow-100 text-yellow-800' : 
+                                cert.status === 'pending' ? 'bg-blue-100 text-blue-800' :
+                                'bg-red-100 text-red-800';
+                
+                let statusText = cert.status === 'active' ? 'ACTIVE' : 
+                                cert.status === 'expiring' ? 'EXPIRING SOON' : 
+                                cert.status === 'pending' ? 'PENDING' :
+                                'EXPIRED';
+                
+                let actionButtons = cert.status === 'expired' ? 
+                                    `<button class="bg-teal-600 text-white px-3 py-1 rounded text-sm hover:bg-teal-700" onclick="renewCertificate('${cert.name}')">Renew Now</button>` : 
+                                    cert.status === 'pending' ? 
+                                    `<button class="text-teal-600 hover:text-teal-800 mr-2 text-sm">Check Status</button>` :
+                                    `<button class="text-teal-600 hover:text-teal-800 mr-2 text-sm" onclick="generateCertificateForDownload('${cert.name}')">View</button>
+                                    <button class="text-teal-600 hover:text-teal-800 text-sm" onclick="generateCertificateForDownload('${cert.name}')">Download</button>`;
+                
+                return `
+                <div class="bg-white border rounded-lg overflow-hidden shadow-sm certificate-card transition-all duration-300" data-status="${cert.status}">
+                    <div class="flex p-6">
+                        <div class="mr-4">
+                            <div class="w-16 h-16 rounded-lg ${cert.status === 'active' ? 'bg-teal-100' : cert.status === 'expiring' ? 'bg-amber-100' : cert.status === 'pending' ? 'bg-blue-100' : 'bg-red-100'} flex items-center justify-center">
+                                <i class="bi ${cert.icon} text-3xl ${cert.color}"></i>
+                            </div>
+                        </div>
+                        <div class="flex-grow">
+                            <h3 class="font-semibold text-lg mb-2">${cert.name}</h3>
+                            <div class="grid grid-cols-2 gap-2 text-sm text-gray-600 mb-3">
+                                <div>
+                                    <p class="text-gray-500">Issue Date</p>
+                                    <p>${cert.issueDate}</p>
+                                </div>
+                                <div>
+                                    <p class="text-gray-500">Expiration</p>
+                                    <p>${cert.expires}</p>
+                                </div>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span class="inline-block px-2 py-1 rounded-full text-xs ${statusClass}">${statusText}</span>
+                                <div>
+                                    ${actionButtons}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                `;
+            }).join('');
+        }
+
+        // Skills
+        async function loadSkills() {
+            // Try to fetch from MongoDB
+            const skillsResult = await fetchData('read', 'skills');
+            
+            // If we have results, use them
+            let skills;
+            if (skillsResult && skillsResult.success && skillsResult.result.length > 0) {
+                skills = skillsResult.result;
+            } else {
+                // Fallback to demo data
+                skills = [
+                    { name: 'Leadership', level: 80, category: 'Management' },
+                    { name: 'Teaching', level: 90, category: 'Education' },
+                    { name: 'Technology', level: 65, category: 'Technical' },
+                    { name: 'Communication', level: 85, category: 'Soft Skills' },
+                    { name: 'Policy Implementation', level: 70, category: 'Government' }
+                ];
+                
+                // Store in MongoDB for future use
+                skills.forEach(async (skill) => {
+                    await fetchData('create', 'skills', null, skill);
+                });
+            }
+
+            const skillsProgress = document.getElementById('skillsProgress');
+            skillsProgress.innerHTML = skills.map(skill => {
+                let barColor = 'bg-teal-600';
+                if (skill.level >= 90) barColor = 'bg-green-600';
+                else if (skill.level < 70) barColor = 'bg-blue-600';
+                
+                return `
+                <div>
+                    <div class="flex justify-between mb-1">
+                        <span class="text-sm font-medium">${skill.name}</span>
+                        <div class="flex items-center">
+                            <span class="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded mr-2">${skill.category}</span>
+                            <span class="text-sm font-medium">${skill.level}%</span>
+                        </div>
+                    </div>
+                    <div class="w-full bg-gray-200 rounded-full h-2.5">
+                        <div class="${barColor} h-2.5 rounded-full" style="width: ${skill.level}%"></div>
+                    </div>
+                </div>
+                `;
+            }).join('');
+        }
+
+        // Add a new goal
+        async function addPersonalGoal(goal) {
+            try {
+                const response = await fetchData('create', 'goals', null, goal);
+                
+                if (response && response.success) {
+                    // Just add the new goal to the UI for now
+                    const goalsContainer = document.getElementById('personalGoals');
+                    
+                    // Determine style based on type
+                    let bgClass = 'bg-blue-50 border-blue-200';
+                    let textClass = 'text-blue-800';
+                    let progressClass = 'bg-blue-600';
+                    
+                    if (goal.type === 'Skill') {
+                        bgClass = 'bg-green-50 border-green-200';
+                        textClass = 'text-green-800';
+                        progressClass = 'bg-green-600';
+                    } else if (goal.type === 'Project') {
+                        bgClass = 'bg-purple-50 border-purple-200';
+                        textClass = 'text-purple-800';
+                        progressClass = 'bg-purple-600';
+                    }
+                    
+                    const goalElement = document.createElement('div');
+                    goalElement.className = `p-3 ${bgClass} border rounded-lg`;
+                    goalElement.innerHTML = `
+                        <div class="flex justify-between items-start">
+                            <h4 class="font-bold ${textClass}">${goal.title}</h4>
+                            <span class="text-xs ${bgClass.replace('50', '100')} ${textClass} px-2 py-1 rounded-full">Not Started</span>
+                        </div>
+                        <p class="text-sm text-gray-600 my-2">Target Date: ${new Date(goal.targetDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+                        <div class="w-full bg-gray-200 rounded-full h-2.5">
+                            <div class="${progressClass} h-2.5 rounded-full" style="width: 0%"></div>
+                        </div>
+                    `;
+                    
+                    goalsContainer.prepend(goalElement);
+                }
+            } catch (error) {
+                console.error('Error adding goal:', error);
+            }
+        }
+
+        // Goal Modal Functions
+        function openGoalModal() {
+            document.getElementById('goalModal').classList.remove('hidden');
+        }
+        
+        function closeGoalModal() {
+            document.getElementById('goalModal').classList.add('hidden');
+            document.getElementById('goalForm').reset();
+        }
+        
+        // Handle goal form submission
+        document.getElementById('goalForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const goal = {
+                title: document.getElementById('goalTitle').value,
+                type: document.getElementById('goalType').value,
+                description: document.getElementById('goalDescription').value,
+                targetDate: document.getElementById('targetDate').value,
+                careerAlignment: document.querySelector('input[name="careerAlignment"]:checked').value,
+                progress: 0,
+                status: 'Not Started',
+                createdAt: new Date().toISOString()
+            };
+            
+            addPersonalGoal(goal);
+            closeGoalModal();
+        });
+
+        // Certificate Upload Functions
+        function openUploadModal() {
+            document.getElementById('uploadModal').classList.remove('hidden');
+        }
+        
+        function closeUploadModal() {
+            document.getElementById('uploadModal').classList.add('hidden');
+            document.getElementById('certificateUploadForm').reset();
+            document.getElementById('fileName').textContent = '';
+        }
+        
+        // Display file name when selected
+        document.getElementById('certificateFile').addEventListener('change', function(e) {
+            if (e.target.files.length > 0) {
+                document.getElementById('fileName').textContent = e.target.files[0].name;
+            }
+        });
+        
+        // Handle certificate upload
+        document.getElementById('certificateUploadForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const certificate = {
+                name: document.getElementById('certificateTitle').value,
+                type: document.getElementById('certificateType').value,
+                issueDate: document.getElementById('issueDate').value,
+                expires: document.getElementById('expiryDate').value || 'N/A',
+                status: 'active',
+                icon: 'bi-award-fill',
+                color: 'text-teal-600',
+                uploadedAt: new Date().toISOString()
+            };
+            
+            try {
+                const response = await fetchData('create', 'certifications', null, certificate);
+                
+                if (response && response.success) {
+                    // Reload certifications to show the new one
+                    await loadCertifications();
+                    closeUploadModal();
+                    
+                    // Show success notification
+                    alert('Certificate uploaded successfully!');
+                }
+            } catch (error) {
+                console.error('Error uploading certificate:', error);
+                alert('There was an error uploading your certificate. Please try again.');
+            }
+        });
+
+        // Course Video Modal Functions
+        function openCourseVideo(videoUrl) {
+            document.getElementById('courseVideoFrame').src = videoUrl;
+            document.getElementById('courseVideoModal').classList.remove('hidden');
+        }
+        
+        function closeCourseVideo() {
+            document.getElementById('courseVideoFrame').src = '';
+            document.getElementById('courseVideoModal').classList.add('hidden');
+        }
+
+        // Course Details Modal Functions
+        function openCourseDetailsModal() {
+            document.getElementById('courseDetailsModal').classList.remove('hidden');
+        }
+        
+        function closeCourseDetailsModal() {
+            document.getElementById('courseDetailsModal').classList.add('hidden');
+        }
+
+        // Enrollment Form Functions
+        function openEnrollmentForm() {
+            document.getElementById('enrollmentModal').classList.remove('hidden');
+        }
+        
+        function closeEnrollmentForm() {
+            document.getElementById('enrollmentModal').classList.add('hidden');
+            document.getElementById('enrollmentForm').reset();
+        }
+        
+        // Handle enrollment form submission
+        document.getElementById('enrollmentForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            alert('Enrollment successful! The course has been added to your dashboard.');
+            closeEnrollmentForm();
+            
+            // Add a new activity record
+            const newActivity = {
+                title: 'Enrolled in Education Technology Integration',
+                date: new Date().toISOString().split('T')[0],
+                icon: 'bi-journal-plus',
+                iconColor: 'text-teal-500'
+            };
+            
+            fetchData('create', 'activities', null, newActivity).then(() => {
+                loadActivities();
+            });
+        });
+
+        // Career Details Functions
+        function showCareerDetails(position) {
+            document.getElementById('careerDetailsModal').classList.remove('hidden');
+        }
+        
+        function closeCareerDetailsModal() {
+            document.getElementById('careerDetailsModal').classList.add('hidden');
+        }
+
+        // Suggested Courses Functions
+        function showSuggestedCourses() {
+            document.getElementById('suggestedCoursesModal').classList.remove('hidden');
+        }
+        
+        function closeSuggestedCoursesModal() {
+            document.getElementById('suggestedCoursesModal').classList.add('hidden');
+        }
+
+        // Certificate Download Functions
+        function generateCertificateForDownload(courseName) {
+            // Set certificate contents
+            document.getElementById('certificateName').textContent = document.getElementById('currentUsername').textContent;
+            document.getElementById('certificateCourse').textContent = courseName;
+            
+            // Set current date
+            const today = new Date();
+            document.getElementById('certificateDate').textContent = today.toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+            
+            // Use html2canvas to capture the certificate
+            const certificateElement = document.getElementById('certificateContent');
+            
+            html2canvas(certificateElement).then(canvas => {
+                // Convert to PDF using jsPDF
+                const { jsPDF } = window.jspdf;
+                const pdf = new jsPDF('landscape', 'pt', [canvas.width, canvas.height]);
+                
+                const imgData = canvas.toDataURL('image/png');
+                pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
+                
+                // Download the PDF
+                pdf.save(`${courseName.replace(/\s+/g, '_')}_Certificate.pdf`);
+            });
+        }
+
+        // Generate Compliance Report
+        function generateComplianceReport() {
+            // Set report contents
+            document.getElementById('reportName').textContent = document.getElementById('currentUsername').textContent;
+            
+            // Set current date
+            const today = new Date();
+            const formattedDate = today.toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+            
+            const formattedTimestamp = `${formattedDate}, ${today.toLocaleTimeString('en-US', {
+                hour: 'numeric',
+                minute: '2-digit',
+                hour12: true
+            })}`;
+            
+            document.getElementById('reportDate').textContent = `Generated on: ${formattedDate}`;
+            document.getElementById('reportTimestamp').textContent = `Generated: ${formattedTimestamp}`;
+            
+            // Use html2canvas to capture the report
+            const reportElement = document.getElementById('complianceReportContent');
+            
+            html2canvas(reportElement).then(canvas => {
+                // Convert to PDF using jsPDF
+                const { jsPDF } = window.jspdf;
+                const pdf = new jsPDF('portrait', 'pt', [canvas.width, canvas.height]);
+                
+                const imgData = canvas.toDataURL('image/png');
+                pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
+                
+                // Download the PDF
+                pdf.save(`Compliance_Report_${today.getFullYear()}_Q${Math.ceil((today.getMonth() + 1) / 3)}.pdf`);
+            });
+        }
+
+        // HR Report Generation Functions
+        function generateTrainingReport() {
+            generateHRReport('Training_Compliance_Report');
+        }
+        
+        function generateSkillsGapReport() {
+            generateHRReport('Skills_Gap_Analysis');
+        }
+        
+        function generateLearningHoursReport() {
+            generateHRReport('Learning_Hours_Summary');
+        }
+        
+        function generateCareerReport() {
+            generateHRReport('Career_Development_Report');
+        }
+        
+        function generateCertificationReport() {
+            generateHRReport('Certification_Status_Report');
+        }
+        
+        function generateHRReport(reportName) {
+            // For demo purposes, we'll just use the compliance report template
+            const today = new Date();
+            const formattedDate = today.toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+            
+            document.getElementById('reportDate').textContent = `Generated on: ${formattedDate}`;
+            
+            // Use html2canvas to capture the report
+            const reportElement = document.getElementById('complianceReportContent');
+            
+            html2canvas(reportElement).then(canvas => {
+                // Convert to PDF using jsPDF
+                const { jsPDF } = window.jspdf;
+                const pdf = new jsPDF('portrait', 'pt', [canvas.width, canvas.height]);
+                
+                const imgData = canvas.toDataURL('image/png');
+                pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
+                
+                // Download the PDF
+                pdf.save(`${reportName}_${today.getFullYear()}_Q${Math.ceil((today.getMonth() + 1) / 3)}.pdf`);
+            });
+        }
+
+        // Renew Certificate
+        function renewCertificate(certName) {
+            // Update the certificate status in MongoDB
+            fetchData('update', 'certifications', { name: certName }, { 
+                status: 'active',
+                issueDate: new Date().toISOString().split('T')[0],
+                expires: new Date(new Date().setFullYear(new Date().getFullYear() + 1)).toISOString().split('T')[0]
+            }).then(() => {
+                // Reload certifications to show the updated one
+                loadCertifications();
+                
+                // Show success notification
+                alert(`${certName} has been successfully renewed for one year.`);
+            });
+        }
+
+        // Filter courses
+        function filterCourses(status) {
+            const allCourses = document.querySelectorAll('#courseCatalog .course-card');
+            const categoryFilter = document.getElementById('categoryFilter').value;
+            const searchQuery = document.getElementById('courseSearch').value.toLowerCase();
+            
+            allCourses.forEach(course => {
+                const courseCategory = course.getAttribute('data-category');
+                const courseStatus = course.getAttribute('data-status');
+                const courseTitle = course.querySelector('h3').innerText.toLowerCase();
+                
+                const matchesStatus = status === 'all' || courseStatus === status;
+                const matchesCategory = categoryFilter === '' || courseCategory === categoryFilter;
+                const matchesSearch = searchQuery === '' || courseTitle.includes(searchQuery);
+                
+                if (matchesStatus && matchesCategory && matchesSearch) {
+                    course.classList.remove('hidden');
+                } else {
+                    course.classList.add('hidden');
+                }
+            });
+            
+            // Update active tab
+            document.querySelectorAll('#courses .border-b button').forEach(button => {
+                button.classList.remove('text-teal-700', 'border-b-2', 'border-teal-600');
+                button.classList.add('text-gray-500');
+            });
+            
+            const activeButton = Array.from(document.querySelectorAll('#courses .border-b button')).find(
+                button => button.innerText.toLowerCase().includes(status === 'all' ? 'all' : status)
+            );
+            
+            if (activeButton) {
+                activeButton.classList.add('text-teal-700', 'border-b-2', 'border-teal-600');
+                activeButton.classList.remove('text-gray-500');
+            }
+        }
+        
+        // Filter certifications
+        function filterCertifications(status) {
+            const allCerts = document.querySelectorAll('#certificationsList .certificate-card');
+            
+            allCerts.forEach(cert => {
+                const certStatus = cert.getAttribute('data-status');
+                
+                if (status === 'all' || certStatus === status) {
+                    cert.classList.remove('hidden');
+                } else {
+                    cert.classList.add('hidden');
+                }
+            });
+            
+            // Update active tab
+            document.querySelectorAll('#certifications .border-b button').forEach(button => {
+                button.classList.remove('text-teal-700', 'border-b-2', 'border-teal-600');
+                button.classList.add('text-gray-500');
+            });
+            
+            const activeButton = Array.from(document.querySelectorAll('#certifications .border-b button')).find(
+                button => button.innerText.toLowerCase().includes(status === 'all' ? 'all' : status)
+            );
+            
+            if (activeButton) {
+                activeButton.classList.add('text-teal-700', 'border-b-2', 'border-teal-600');
+                activeButton.classList.remove('text-gray-500');
+            }
+        }
+
+        // Navigation
+        function showSection(sectionId) {
+            const sections = ['dashboard', 'courses', 'certifications', 'career', 'compliance', 'adminSection', 'educatorSection', 'hrSection'];
+            sections.forEach(id => {
+                document.getElementById(id).classList.add('hidden');
+            });
+            document.getElementById(sectionId).classList.remove('hidden');
+            
+            // Close mobile menu if open
+            document.getElementById('mobileMenu').classList.add('hidden');
+        }
+
+        // Event Listeners
+        document.getElementById('courseSearch').addEventListener('input', function() {
+            const activeTab = Array.from(document.querySelectorAll('#courses .border-b button'))
+                .find(btn => btn.classList.contains('border-teal-600'));
+            
+            if (activeTab) {
+                const status = activeTab.innerText.toLowerCase().includes('all') ? 'all' : 
+                              activeTab.innerText.toLowerCase().includes('progress') ? 'inprogress' :
+                              activeTab.innerText.toLowerCase().includes('completed') ? 'completed' :
+                              activeTab.innerText.toLowerCase().includes('mandatory') ? 'mandatory' :
+                              'all';
+                
+                filterCourses(status);
+            } else {
+                filterCourses('all');
+            }
+        });
+        
+        document.getElementById('categoryFilter').addEventListener('change', function() {
+            const activeTab = Array.from(document.querySelectorAll('#courses .border-b button'))
+                .find(btn => btn.classList.contains('border-teal-600'));
+            
+            if (activeTab) {
+                const status = activeTab.innerText.toLowerCase().includes('all') ? 'all' : 
+                              activeTab.innerText.toLowerCase().includes('progress') ? 'inprogress' :
+                              activeTab.innerText.toLowerCase().includes('completed') ? 'completed' :
+                              activeTab.innerText.toLowerCase().includes('mandatory') ? 'mandatory' :
+                              'all';
+                
+                filterCourses(status);
+            } else {
+                filterCourses('all');
+            }
+        });
+
+        // Switch Role
+        function switchRole() {
+            const role = document.getElementById('roleSelector').value;
+            // Also sync mobile role selector
+            document.getElementById('mobileRoleSelector').value = role;
+            
+            // Update role display
+            document.getElementById('currentRoleDisplay').innerText = role.charAt(0).toUpperCase() + role.slice(1);
+            
+            // Show role-specific sections based on selected role
+            const roleSections = {
+                'admin': ['adminSection'],
+                'educator': ['educatorSection'],
+                'hr': ['hrSection'],
+                'employee': ['dashboard']
+            };
+            
+            // Hide all role-specific sections
+            ['adminSection', 'educatorSection', 'hrSection'].forEach(id => {
+                document.getElementById(id).classList.add('hidden');
+            });
+            
+            // Show sections for selected role
+            if (roleSections[role]) {
+                roleSections[role].forEach(id => {
+                    document.getElementById(id).classList.remove('hidden');
+                });
+            }
+            
+            // Always show dashboard for initial view
+            if (role === 'employee') {
+                showSection('dashboard');
+            }
+        }
+
+        // Mobile Menu Toggle
+        document.getElementById('mobileMenuButton').addEventListener('click', function() {
+            const mobileMenu = document.getElementById('mobileMenu');
+            mobileMenu.classList.toggle('hidden');
+        });
+
+        // Initialize when document is loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            // Close mobile menu when clicking outside
+            document.addEventListener('click', function(event) {
+                const mobileMenu = document.getElementById('mobileMenu');
+                const mobileMenuButton = document.getElementById('mobileMenuButton');
+                
+                if (!mobileMenuButton.contains(event.target) && !mobileMenu.contains(event.target)) {
+                    mobileMenu.classList.add('hidden');
+                }
+            });
+            
+            // Sync mobile role selector with desktop
+            document.getElementById('mobileRoleSelector').addEventListener('change', function() {
+                document.getElementById('roleSelector').value = this.value;
+                switchRole();
+            });
+        });
+    </script>
+<script>document.body.addEventListener('wheel', e => { if (!e.ctrlKey) return; e.preventDefault(); return }, { passive: false })</script>
+	</body>
+</html>
